@@ -1,0 +1,33 @@
+{
+  "name": "ponchopay/pp-php",
+  "description": "Tools to integrate PonchoPay on PHP",
+  "type": "library",
+  "license": "MIT",
+  "autoload": {
+    "files": [
+      "src/token.php"
+    ],
+    "psr-4": {
+      "PonchoPay\\": "src/"
+    }
+  },
+  "authors": [
+    {
+      "name": "PonchoPay",
+      "email": "info@ponchopay.com"
+    }
+  ],
+  "require": {
+    "php": "~7.0 || ~8.0",
+    "symfony/http-client": "^6.3"
+  },
+  "require-dev": {
+    "friendsofphp/php-cs-fixer": "^3.26",
+    "phpunit/phpunit": "^10.3"
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-main": "1.0.x-dev"
+    }
+  }
+}
