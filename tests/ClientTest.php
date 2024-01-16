@@ -34,14 +34,14 @@ class ClientTest extends TestCase
 
         $client = new Client('key');
         (fn () => $this->client = $http)->call($client);
-        $this->assertSame($client->initiatePayment(DEFAULTS), $url);
+        $this->assertSame($url, $client->initiatePayment(DEFAULTS));
 
-        $this->assertSame($response->getRequestMethod(), 'POST');
-        $this->assertSame($response->getRequestUrl(), 'https://pay.ponchopay.com/api/integration/generic/initiate');
+        $this->assertSame('POST', $response->getRequestMethod());
+        $this->assertSame('https://pay.ponchopay.com/api/integration/generic/initiate', $response->getRequestUrl());
 
         $options = $response->getRequestOptions();
         $this->assertContains('content-type: application/json', $options['headers']);
-        $this->assertSame($options['body'], json_encode([...DEFAULTS, 'token' => TOKEN]));
+        $this->assertSame(json_encode([...DEFAULTS, 'token' => TOKEN]), $options['body']);
     }
 
     public function testInitiatePaymentRequestsUrlForPaymentOnAnotherServer(): void
@@ -52,14 +52,14 @@ class ClientTest extends TestCase
 
         $client = new Client('key', 'http://other.server/');
         (fn () => $this->client = $http)->call($client);
-        $this->assertSame($client->initiatePayment(DEFAULTS), $url);
+        $this->assertSame($url, $client->initiatePayment(DEFAULTS));
 
-        $this->assertSame($response->getRequestMethod(), 'POST');
-        $this->assertSame($response->getRequestUrl(), 'http://other.server/api/integration/generic/initiate');
+        $this->assertSame('POST', $response->getRequestMethod());
+        $this->assertSame('http://other.server/api/integration/generic/initiate', $response->getRequestUrl());
 
         $options = $response->getRequestOptions();
         $this->assertContains('content-type: application/json', $options['headers']);
-        $this->assertSame($options['body'], json_encode([...DEFAULTS, 'token' => TOKEN]));
+        $this->assertSame(json_encode([...DEFAULTS, 'token' => TOKEN]), $options['body']);
     }
 
     public function testInitiatePaymentRequestsUrlForPaymentWithNote(): void
@@ -71,14 +71,14 @@ class ClientTest extends TestCase
 
         $client = new Client('key');
         (fn () => $this->client = $http)->call($client);
-        $this->assertSame($client->initiatePayment($init), $url);
+        $this->assertSame($url, $client->initiatePayment($init));
 
-        $this->assertSame($response->getRequestMethod(), 'POST');
-        $this->assertSame($response->getRequestUrl(), 'https://pay.ponchopay.com/api/integration/generic/initiate');
+        $this->assertSame('POST', $response->getRequestMethod());
+        $this->assertSame('https://pay.ponchopay.com/api/integration/generic/initiate', $response->getRequestUrl());
 
         $options = $response->getRequestOptions();
         $this->assertContains('content-type: application/json', $options['headers']);
-        $this->assertSame($options['body'], json_encode([...$init, 'token' => TOKEN]));
+        $this->assertSame(json_encode([...$init, 'token' => TOKEN]), $options['body']);
     }
 
     public static function expiryDataProvider(): array
@@ -103,14 +103,14 @@ class ClientTest extends TestCase
 
         $client = new Client('key');
         (fn () => $this->client = $http)->call($client);
-        $this->assertSame($client->initiatePayment($init), $url);
+        $this->assertSame($url, $client->initiatePayment($init));
 
-        $this->assertSame($response->getRequestMethod(), 'POST');
-        $this->assertSame($response->getRequestUrl(), 'https://pay.ponchopay.com/api/integration/generic/initiate');
+        $this->assertSame('POST', $response->getRequestMethod());
+        $this->assertSame('https://pay.ponchopay.com/api/integration/generic/initiate', $response->getRequestUrl());
 
         $options = $response->getRequestOptions();
         $this->assertContains('content-type: application/json', $options['headers']);
-        $this->assertSame($options['body'], json_encode([...$init, 'expiry' => $sent, 'token' => TOKEN]));
+        $this->assertSame(json_encode([...$init, 'expiry' => $sent, 'token' => TOKEN]), $options['body']);
     }
 
     public function testInitiatePaymentFailsIfResponseFromServerIsNotRedirect(): void
@@ -123,11 +123,11 @@ class ClientTest extends TestCase
         $this->expectException(PonchoPayException::class);
         $client->initiatePayment(DEFAULTS);
 
-        $this->assertSame($response->getRequestMethod(), 'POST');
-        $this->assertSame($response->getRequestUrl(), 'https://pay.ponchopay.com/api/integration/generic/initiate');
+        $this->assertSame('POST', $response->getRequestMethod());
+        $this->assertSame('https://pay.ponchopay.com/api/integration/generic/initiate', $response->getRequestUrl());
 
         $options = $response->getRequestOptions();
         $this->assertContains('content-type: application/json', $options['headers']);
-        $this->assertSame($options['body'], json_encode([...DEFAULTS, 'token' => TOKEN]));
+        $this->assertSame(json_encode([...DEFAULTS, 'token' => TOKEN]), $options['body']);
     }
 }
