@@ -29,11 +29,20 @@ final class Client
     }
 
     /**
-     * @param array{metadata: string, urn: string, amount: int, email: string, note?: string} $init
+     * @param array{metadata: string, urn: string, amount: int, email: string, note?: string, expiry?: \DateTimeInterface|string} $init
      */
     private function getData(array $init): string
     {
-        return json_encode([...$init, 'token' => createToken($this->key, $init['metadata'])]);
+        $optionals = [];
+        if (array_key_exists('expiry', $init)) {
+            if ($init['expiry'] instanceof \DateTimeInterface) {
+                $optionals['expiry'] = $init['expiry']->format(\DateTimeInterface::ATOM);
+            } else {
+                $optionals['expiry'] = $init['expiry'];
+            }
+        }
+
+        return json_encode([...$init, ...$optionals, 'token' => createToken($this->key, $init['metadata'])]);
     }
 
     /**
