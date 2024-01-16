@@ -59,13 +59,14 @@ Parameters:
 
 The payment initialisation associative array is defined as follows:
 
-| Parameter | Mandatory | Type   | Description                                          |
-| --------- | --------- | ------ | ---------------------------------------------------- |
-| metadata  | Yes       | string | Any string you want to keep saved within the payment |
-| urn       | Yes       | string | The Unique Reference Number                          |
-| amount    | Yes       | number | The payable amount in pences                         |
-| email     | Yes       | string | The user email                                       |
-| note      | No        | string | Any note to be attached to the payment               |
+| Parameter | Mandatory | Type                         | Description                                          |
+| --------- | --------- | ---------------------------- | ---------------------------------------------------- |
+| metadata  | Yes       | string                       | Any string you want to keep saved within the payment |
+| urn       | Yes       | string                       | The Unique Reference Number                          |
+| amount    | Yes       | number                       | The payable amount in pences                         |
+| email     | Yes       | string                       | The user email                                       |
+| note      | No        | string                       | Any note to be attached to the payment               |
+| expiry    | No        | \DateTimeInterface or string | The date you want the payment to expire              |
 
 Returns:
 It returns the URL the user needs to use to make the payment.

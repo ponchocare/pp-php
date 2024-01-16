@@ -81,6 +81,38 @@ class ClientTest extends TestCase
         $this->assertSame($options['body'], json_encode([...$init, 'token' => TOKEN]));
     }
 
+    public static function expiryDataProvider(): array
+    {
+        $ts = new \DateTime();
+
+        return [
+          [$ts, $ts->format(\DateTimeInterface::ATOM)],
+          ['some string', 'some string']
+        ];
+    }
+
+    /**
+    * @dataProvider expiryDataProvider
+    */
+    public function testInitiatePaymentRequestsUrlForPaymentWithExpiryDate($sending, $sent): void
+    {
+        $url = 'http://some/url';
+        $response = getRedirectResponse($url);
+        $http = new MockHttpClient([$response]);
+        $init = [...DEFAULTS, 'expiry' => $sending];
+
+        $client = new Client('key');
+        (fn () => $this->client = $http)->call($client);
+        $this->assertSame($client->initiatePayment($init), $url);
+
+        $this->assertSame($response->getRequestMethod(), 'POST');
+        $this->assertSame($response->getRequestUrl(), 'https://pay.ponchopay.com/api/integration/generic/initiate');
+
+        $options = $response->getRequestOptions();
+        $this->assertContains('content-type: application/json', $options['headers']);
+        $this->assertSame($options['body'], json_encode([...$init, 'expiry' => $sent, 'token' => TOKEN]));
+    }
+
     public function testInitiatePaymentFailsIfResponseFromServerIsNotRedirect(): void
     {
         $response = new MockResponse('all good?');
