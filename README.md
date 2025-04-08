@@ -12,64 +12,16 @@ composer require ponchopay/pp-php
 
 ## Usage
 
-This package declares 2 objects:
+This package declares the following functions:
+- [createToken](https://github.com/ponchocare/pp-php/blob/master/docs/token/createToken.md): This function allows the creation of tokens for the initialisation endpoints.
+- [createJWT](https://github.com/ponchocare/pp-php/blob/master/docs/token/createJWT.md): This function allows the creation of JWTs for the payment manipulation endpoints.
 
-### createToken: function
-
-Importing:
-
-```php
-use function PonchoPay\createToken;
-```
-
-Parameters:
-
-| Parameter | Mandatory | Type   | Description                                          |
-| --------- | --------- | ------ | ---------------------------------------------------- |
-| key       | Yes       | string | Integration key                                      |
-| metadata  | Yes       | string | Any string you want to keep saved within the payment |
-
-Returns:
-It returns an string containing the token to be used to initate a payment
-
-### Client: class
-
-Importing:
-
-```php
-use PonchoPay\Client;
-```
-
-Constructor:
-
-| Parameter | Mandatory | Type   | Description                                                    |
-| --------- | --------- | ------ | -------------------------------------------------------------- |
-| key       | Yes       | string | Integration key                                                |
-| base      | No        | string | Base PonchoPay URL to use. Default: https://pay.ponchopay.com/ |
-
-Methods:
-
-**initiatePayment**:
-
-Parameters:
-
-| Parameter | Mandatory | Type  | Description                   |
-| --------- | --------- | ----- | ----------------------------- |
-| init      | Yes       | array | Payment initialisation object |
-
-The payment initialisation associative array is defined as follows:
-
-| Parameter | Mandatory | Type                         | Description                                          |
-| --------- | --------- | ---------------------------- | ---------------------------------------------------- |
-| metadata  | Yes       | string                       | Any string you want to keep saved within the payment |
-| urn       | Yes       | string                       | The Unique Reference Number                          |
-| amount    | Yes       | number                       | The payable amount in pences                         |
-| email     | Yes       | string                       | The user email                                       |
-| note      | No        | string                       | Any note to be attached to the payment               |
-| expiry    | No        | \DateTimeInterface or string | The date you want the payment to expire              |
-
-Returns:
-It returns the URL the user needs to use to make the payment.
+And the `Client` class which provides the following methods:
+- [initiatePayment](https://github.com/ponchocare/pp-php/blob/master/docs/client/initiatePayment.md): This method allows to initialise a payment in PonchoPay.
+- [initiateSubscription](https://github.com/ponchocare/pp-php/blob/master/docs/client/initiateSubscription.md): This method allows to initialise a subscription in PonchoPay.
+- [updatePaymentMethod](https://github.com/ponchocare/pp-php/blob/master/docs/client/updatePaymentMethod.md): This method allows to change the Payment Method properties.
+- [refundPaymentMethod](https://github.com/ponchocare/pp-php/blob/master/docs/client/refundPaymentMethod.md): This method allows to fully or partially refund a Payment Method.
+- [cancelPayment](https://github.com/ponchocare/pp-php/blob/master/docs/client/cancelPayment.md): This method allows to cancel a Payment.
 
 ## Development
 
@@ -78,7 +30,7 @@ It returns the URL the user needs to use to make the payment.
 To automatically fix linting and formatting errors, run
 
 ```bash
-vendor/bin/php-cs-fixer fix .
+composer exec php-cs-fixer fix .
 ```
 
 ### Testing
@@ -86,5 +38,5 @@ vendor/bin/php-cs-fixer fix .
 To ensure the project is bug-free, run
 
 ```bash
-vendor/bin/phpunit tests
+composer exec phpunit tests/
 ```
