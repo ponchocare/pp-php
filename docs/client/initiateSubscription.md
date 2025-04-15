@@ -42,12 +42,12 @@ SubscriptionInit:
 
 Repetition:
 
-| Parameter   | Mandatory | Type    | Description                                                                       |
-| ----------- | --------- | ------- | --------------------------------------------------------------------------------- |
-| granularity | Yes       | string  | The time span range. It can be `daily`, `weekly`, `monthly`, or `yearly`          |
-| period      | Yes       | integer | The amount of granularity before the next payment is generated.                   |
-| weekdays    | Maybe     | array   | If granularity is `weekly`, this must contain an array with the days in lowercase |
-| day         | Maybe     | integer | If granularity is `monthly`, this must contain the day of the month               |
+| Parameter   | Mandatory | Type    | Description                                                                     |
+| ----------- | --------- | ------- | ------------------------------------------------------------------------------- |
+| granularity | Yes       | string  | The time span range. It can be `day`, `week`, `month`, or `year`                |
+| period      | Yes       | integer | The amount of granularity before the next payment is generated.                 |
+| weekdays    | Maybe     | array   | If granularity is `week`, this must contain an array with the days in lowercase |
+| day         | Maybe     | integer | If granularity is `month`, this must contain the day of the month               |
 
 Ending:
 

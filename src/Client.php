@@ -88,10 +88,10 @@ final class Client
      *    note?: string,
      *    email: string,
      *    repetition:
-     *        array{granularity: 'daily', period: int} |
-     *        array{granularity: 'weekly', period: int, weekdays: string[]} |
-     *        array{granularity: 'monthly', period: int, day: int} |
-     *        array{granularity: 'yearly', period: int},
+     *        array{granularity: 'day', period: int} |
+     *        array{granularity: 'week', period: int, weekdays: string[]} |
+     *        array{granularity: 'month', period: int, day: int} |
+     *        array{granularity: 'year', period: int},
      *    ending?:
      *        array{condition: 'never'} |
      *        array{condition: 'occurrences', occurrences: int} |
