@@ -1,0 +1,25 @@
+{
+  "name": "ponchopay/example",
+  "description": "Example of pp-php usage",
+  "type": "project",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "PonchoPay",
+      "email": "info@ponchopay.com"
+    }
+  ],
+  "repositories": [
+    {
+      "type": "path",
+      "url": "../",
+      "options": {
+        "symlink": true
+      }
+    }
+  ],
+  "require": {
+    "ponchopay/pp-php": "*"
+  },
+  "minimum-stability": "dev"
+}
