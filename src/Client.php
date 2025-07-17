@@ -150,4 +150,15 @@ final class Client
         $path = replaceParams('/api/payment/[paymentId]/cancel', ['paymentId' => $paymentId]);
         $this->issuePutRequest($path, $payload);
     }
+
+    /**
+     * Requests the cancelation of a recursion.
+     *
+     * @param array{urn: string, email: string} $payload
+     */
+    public function cancelRecursion(string $recursionId, array $payload): void
+    {
+        $path = replaceParams('/api/recursion/[recursionId]/cancel', ['recursionId' => $recursionId]);
+        $this->issuePutRequest($path, $payload);
+    }
 }

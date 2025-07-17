@@ -22,6 +22,7 @@ And the `Client` class which provides the following methods:
 - [updatePaymentMethod](https://github.com/ponchocare/pp-php/blob/master/docs/client/updatePaymentMethod.md): This method allows to change the Payment Method properties.
 - [refundPaymentMethod](https://github.com/ponchocare/pp-php/blob/master/docs/client/refundPaymentMethod.md): This method allows to fully or partially refund a Payment Method.
 - [cancelPayment](https://github.com/ponchocare/pp-php/blob/master/docs/client/cancelPayment.md): This method allows to cancel a Payment.
+- [cancelRecursion](https://github.com/ponchocare/pp-php/blob/master/docs/client/cancelRecursion.md): This method allows to cancel a Recurring Payment.
 
 ## Development
 

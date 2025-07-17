@@ -309,6 +309,41 @@ class ClientTest extends TestCase
         $api->expects($this->never())->method('makePostRequest');
         $api->expects($this->once())->method('makePutRequest')->with(
             '/api/payment-method/cb35f971/refund',
+
+    public function testCancelRecursion(): void
+    {
+        $response = $this->createMock(ResponseInterface::class);
+        $response->method('getStatusCode')->willReturn(204);
+
+        $api = $this->createMock(Api::class);
+        $api->expects($this->never())->method('makePostRequest');
+        $api->expects($this->once())->method('makePutRequest')->with(
+            '/api/recursion/kgvkrglq/cancel',
+            $this->callback(function ($value) {
+                $this->assertIsArray($value);
+                $this->assertArrayHasKey('Authorization', $value);
+                $this->assertIsString($value['Authorization']);
+
+                return str_starts_with($value['Authorization'], 'Bearer ');
+            }),
+            serialise([])
+        )->willReturn($response);
+
+        $client = new Client(self::$KEY);
+        (fn () => $this->api = $api)->call($client);
+
+        $client->cancelRecursion('kgvkrglq', ['urn' => self::$URN, 'email' => self::$EMAIL]);
+    }
+
+    public function testCancelRecursionFailsTheRequest(): void
+    {
+        $response = $this->createMock(ResponseInterface::class);
+        $response->method('getStatusCode')->willReturn(200);
+
+        $api = $this->createMock(Api::class);
+        $api->expects($this->never())->method('makePostRequest');
+        $api->expects($this->once())->method('makePutRequest')->with(
+            '/api/recursion/kgvkrglq/cancel',
             $this->callback(function ($value) {
                 $this->assertIsArray($value);
                 $this->assertArrayHasKey('Authorization', $value);
@@ -323,6 +358,6 @@ class ClientTest extends TestCase
         (fn () => $this->api = $api)->call($client);
 
         $this->expectException(PonchoPayException::class);
-        $client->refundPaymentMethod('cb35f971', ['urn' => self::$URN, 'email' => self::$EMAIL]);
+        $client->cancelRecursion('kgvkrglq', ['urn' => self::$URN, 'email' => self::$EMAIL]);
     }
 }
