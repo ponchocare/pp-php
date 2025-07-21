@@ -134,7 +134,7 @@ class ClientTest extends TestCase
           'amount' => 1234,
           'email' => self::$EMAIL,
           'repetition' => [
-            'granularity' => 'weekly',
+            'granularity' => 'week',
             'period' => 2,
             'weekdays' => ['tuesday', 'friday']
           ]
@@ -283,7 +283,7 @@ class ClientTest extends TestCase
         $api = $this->createMock(Api::class);
         $api->expects($this->never())->method('makePostRequest');
         $api->expects($this->once())->method('makePutRequest')->with(
-            '/api/payment-method/cb35f971/refund',
+            '/api/payment/cb35f971/cancel',
             $this->callback(function ($value) {
                 $this->assertIsArray($value);
                 $this->assertArrayHasKey('Authorization', $value);
@@ -297,7 +297,7 @@ class ClientTest extends TestCase
         $client = new Client(self::$KEY);
         (fn () => $this->api = $api)->call($client);
 
-        $client->refundPaymentMethod('cb35f971', ['urn' => self::$URN, 'email' => self::$EMAIL]);
+        $client->cancelPayment('cb35f971', ['urn' => self::$URN, 'email' => self::$EMAIL]);
     }
 
     public function testCancelPaymentFailsTheRequest(): void
@@ -308,7 +308,7 @@ class ClientTest extends TestCase
         $api = $this->createMock(Api::class);
         $api->expects($this->never())->method('makePostRequest');
         $api->expects($this->once())->method('makePutRequest')->with(
-            '/api/payment-method/cb35f971/refund',
+            '/api/payment/cb35f971/cancel',
             $this->callback(function ($value) {
                 $this->assertIsArray($value);
                 $this->assertArrayHasKey('Authorization', $value);
@@ -323,6 +323,57 @@ class ClientTest extends TestCase
         (fn () => $this->api = $api)->call($client);
 
         $this->expectException(PonchoPayException::class);
-        $client->refundPaymentMethod('cb35f971', ['urn' => self::$URN, 'email' => self::$EMAIL]);
+        $client->cancelPayment('cb35f971', ['urn' => self::$URN, 'email' => self::$EMAIL]);
+    }
+
+    public function testCancelRecursion(): void
+    {
+        $response = $this->createMock(ResponseInterface::class);
+        $response->method('getStatusCode')->willReturn(204);
+
+        $api = $this->createMock(Api::class);
+        $api->expects($this->never())->method('makePostRequest');
+        $api->expects($this->once())->method('makePutRequest')->with(
+            '/api/recursion/kgvkrglq/cancel',
+            $this->callback(function ($value) {
+                $this->assertIsArray($value);
+                $this->assertArrayHasKey('Authorization', $value);
+                $this->assertIsString($value['Authorization']);
+
+                return str_starts_with($value['Authorization'], 'Bearer ');
+            }),
+            serialise([])
+        )->willReturn($response);
+
+        $client = new Client(self::$KEY);
+        (fn () => $this->api = $api)->call($client);
+
+        $client->cancelRecursion('kgvkrglq', ['urn' => self::$URN, 'email' => self::$EMAIL]);
+    }
+
+    public function testCancelRecursionFailsTheRequest(): void
+    {
+        $response = $this->createMock(ResponseInterface::class);
+        $response->method('getStatusCode')->willReturn(200);
+
+        $api = $this->createMock(Api::class);
+        $api->expects($this->never())->method('makePostRequest');
+        $api->expects($this->once())->method('makePutRequest')->with(
+            '/api/recursion/kgvkrglq/cancel',
+            $this->callback(function ($value) {
+                $this->assertIsArray($value);
+                $this->assertArrayHasKey('Authorization', $value);
+                $this->assertIsString($value['Authorization']);
+
+                return str_starts_with($value['Authorization'], 'Bearer ');
+            }),
+            serialise([])
+        )->willReturn($response);
+
+        $client = new Client(self::$KEY);
+        (fn () => $this->api = $api)->call($client);
+
+        $this->expectException(PonchoPayException::class);
+        $client->cancelRecursion('kgvkrglq', ['urn' => self::$URN, 'email' => self::$EMAIL]);
     }
 }
