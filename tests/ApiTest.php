@@ -25,6 +25,40 @@ class ApiTest extends TestCase
     }
 
     #[DataProvider('basesProvider')]
+    public function testMakeGetRequest(array $args, string $base): void
+    {
+        $expectedResponse = $this->createMock(ResponseInterface::class);
+
+        $client = $this->createMock(HttpClientInterface::class);
+        $client->expects($this->once())->method('request')->with(
+            'GET',
+            'https://' . $base . self::$PATH,
+            $this->callback(function ($value) {
+                $this->assertIsArray($value);
+                $this->assertArrayHasKey('headers', $value);
+                $this->assertArrayHasKey('Accept-Language', $value['headers']);
+                $this->assertEquals('en', $value['headers']['Accept-Language']);
+                $this->assertArrayHasKey('content-type', $value['headers']);
+                $this->assertEquals('application/json', $value['headers']['content-type']);
+                $this->assertArrayHasKey('x-telemetry', $value['headers']);
+                $this->assertIsString($value['headers']['x-telemetry']);
+                $this->assertArrayHasKey('body', $value);
+                $this->assertEquals('', $value['body']);
+                $this->assertArrayHasKey('max_redirects', $value);
+                $this->assertEquals(0, $value['max_redirects']);
+
+                return true;
+            })
+        )->willReturn($expectedResponse);
+
+        $api = new Api(...$args);
+        (fn () => $this->client = $client)->call($api);
+
+        $response = $api->makeGetRequest(self::$PATH, self::$HEADERS);
+        $this->assertEquals($expectedResponse, $response);
+    }
+
+    #[DataProvider('basesProvider')]
     public function testMakePostRequest(array $args, string $base): void
     {
         $expectedResponse = $this->createMock(ResponseInterface::class);
