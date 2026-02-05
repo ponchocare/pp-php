@@ -4,14 +4,14 @@ namespace PonchoPay\Utils;
 
 use Composer\InstalledVersions;
 
-define('PONCHOPAY_PACKAGE', "ponchopay/pp-php");
+define('PONCHOPAY_PACKAGE', 'ponchopay/pp-php');
 
 /**
- * Joins two paths with a single forward slash in the middle
+ * Joins two paths with a single forward slash in the middle.
  */
 function joinPaths(string $left, string $right): string
 {
-    return rtrim($left, '/') . '/' . ltrim($right, '/');
+    return rtrim($left, '/').'/'.ltrim($right, '/');
 }
 
 /**
@@ -31,7 +31,7 @@ function serialise(mixed $data): string
         return $value;
     };
 
-    if (is_array($data) && count($data) === 0) {
+    if (is_array($data) && 0 === count($data)) {
         return '';
     }
 
@@ -39,7 +39,7 @@ function serialise(mixed $data): string
 }
 
 /**
- * Replaces any occurrence of [param] in the haystack with the corresponding value from params
+ * Replaces any occurrence of [param] in the haystack with the corresponding value from params.
  */
 function replaceParams(string $haystack, array $params): string
 {
@@ -59,7 +59,7 @@ function telemetry(): array
     $version = InstalledVersions::getPrettyVersion(PONCHOPAY_PACKAGE);
 
     return [
-        'package' => ['vendor' => 'poncho', 'name' => PONCHOPAY_PACKAGE, 'version' => $version ],
-        'environment' => ['runtime' => 'php', 'arch' => php_uname('m'), 'platform' => PHP_OS, 'version' => phpversion()]
+        'package' => ['vendor' => 'poncho', 'name' => PONCHOPAY_PACKAGE, 'version' => $version],
+        'environment' => ['runtime' => 'php', 'arch' => php_uname('m'), 'platform' => PHP_OS, 'version' => phpversion()],
     ];
 }

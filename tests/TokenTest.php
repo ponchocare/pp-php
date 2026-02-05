@@ -2,13 +2,18 @@
 
 namespace PonchoPay\Test;
 
-use PHPUnit\Framework\TestCase;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
+use PHPUnit\Framework\TestCase;
 
-use function PonchoPay\createToken;
 use function PonchoPay\createJWT;
+use function PonchoPay\createToken;
 
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
 class TokenTest extends TestCase
 {
     private static $URN = 'IUXfYEwc';
@@ -16,7 +21,6 @@ class TokenTest extends TestCase
     private static $EMAIL = 'help@ponchopay.com';
     private static $METADATA = '{"order":"7ee5422c"}';
     private static $DATA = '{"amount":123}';
-
 
     public function testCreateToken(): void
     {
