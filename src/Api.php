@@ -14,7 +14,7 @@ class Api
     private HttpClientInterface $client;
     private string $base;
 
-    public function __construct(string $base = 'https://pay.ponchopay.com/')
+    public function __construct(string $base)
     {
         $this->client = HttpClient::create();
         $this->base = $base;
