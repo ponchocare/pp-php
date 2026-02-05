@@ -21,6 +21,23 @@ final class Client
     }
 
     /**
+     * Validates whether a location is able to process payments.
+     *
+     * @param array{urn: string, email: string} $payload
+     *
+     * @return object{
+     *   isEnabled: bool,
+     *   isVisible: bool,
+     *   isBeta: bool,
+     *   isDeprecated: bool
+     * }
+     */
+    public function validateLocationUrn(array $payload): object
+    {
+        return $this->issueGetRequest('/api/integration/validate', $payload);
+    }
+
+    /**
      * Initiates a payment.
      * This method returns a URL to redirect the user to.
      *
@@ -141,35 +158,23 @@ final class Client
         throw new PonchoPayException("Unexpected response. Expected 302 as status code but {$response->getStatusCode()} was received");
     }
 
-    private function issuePutRequest(string $url, array $data): void
+    private function issueGetRequest(string $url, array $data): object
     {
         $urn = $data['urn'];
         $email = $data['email'];
 
-        $body = serialise(array_diff_key($data, ['urn' => $urn, 'email' => $email]));
-        $jwt = createJWT($urn, $this->key, $email, $body);
+        $jwt = createJWT($urn, $this->key, $email, '');
 
         $headers = ['Authorization' => 'Bearer '.$jwt];
-        $response = $this->api->makePutRequest($url, $headers, $body);
+        $response = $this->api->makeGetRequest($url, $headers);
 
-        if (204 !== $response->getStatusCode()) {
-            throw new PonchoPayException("Unexpected response. Expected 204 as status code but {$response->getStatusCode()} was received");
-        }
-    }
-
-    private function getRedirectLocation(string $url, array $data): string
-    {
-        $body = serialise([
-            ...$data,
-            'token' => createToken($this->key, $data['metadata']),
-        ]);
-
-        $response = $this->api->makePostRequest($url, [], $body);
-        if (302 === $response->getStatusCode()) {
-            return $response->getHeaders(false)['location'][0];
+        if (200 !== $response->getStatusCode()) {
+            throw new PonchoPayException("Unexpected response. Expected 200 as status code but {$response->getStatusCode()} was received");
         }
 
-        throw new PonchoPayException("Unexpected response. Expected 302 as status code but {$response->getStatusCode()} was received");
+        $body = $response->getContent();
+
+        return json_decode($body);
     }
 
     private function issuePutRequest(string $url, array $data): void

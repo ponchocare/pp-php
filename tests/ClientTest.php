@@ -2,15 +2,20 @@
 
 namespace PonchoPay\Test;
 
-use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
-use Symfony\Contracts\HttpClient\ResponseInterface;
-use PonchoPay\Client;
+use PHPUnit\Framework\TestCase;
 use PonchoPay\Api;
+use PonchoPay\Client;
 use PonchoPay\PonchoPayException;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 use function PonchoPay\Utils\serialise;
 
+/**
+ * @internal
+ *
+ * @covers
+ */
 class ClientTest extends TestCase
 {
     private static $URN = 'IUpGPArQ';
@@ -18,27 +23,37 @@ class ClientTest extends TestCase
     private static $KEY = '6N28tFbrufnfCT58ZvmzIwaL8S1aVFryIasJazFqdc516T/1ZrLw7CDqOSlF5NeF';
     private static $LOCATION = 'https://returned/location';
 
-    public static function initiatePaymentProvider(): array
+    public function testValidateLocationUrn(): void
     {
-        $defaults = [
-          'metadata' => 'order-1234',
-          'urn' => self::$URN,
-          'amount' => 1234,
-          'email' => self::$EMAIL
-        ];
+        $response = $this->createStub(ResponseInterface::class);
+        $response->method('getStatusCode')->willReturn(200);
+        $response->method('getContent')->willReturn('{"some":"data"}');
 
-        return [
-            'with all the mandatory values'  => [$defaults],
-            'with a note' => [[...$defaults, 'note' => 'order note']],
-            'with an expiry date' => [[...$defaults, 'date' => '2025-04-03T12:57:16.000Z']],
-            'with a minimum card amount' => [[...$defaults, 'constraints' => ['minimum_card_amount' => 56]]]
-        ];
+        $api = $this->createMock(Api::class);
+        $api->expects($this->never())->method('makePutRequest');
+        $api->expects($this->never())->method('makePostRequest');
+        $api->expects($this->once())->method('makeGetRequest')->with(
+            '/api/integration/validate',
+            $this->callback(function ($value) {
+                $this->assertIsArray($value);
+                $this->assertArrayHasKey('Authorization', $value);
+                $this->assertIsString($value['Authorization']);
+
+                return str_starts_with($value['Authorization'], 'Bearer ');
+            }),
+        )->willReturn($response);
+
+        $client = new Client(self::$KEY);
+        (fn () => $this->api = $api)->call($client);
+
+        $response = $client->validateLocationUrn(['urn' => self::$URN, 'email' => self::$EMAIL]);
+        $this->assertIsObject($response);
     }
 
     #[DataProvider('initiatePaymentProvider')]
     public function testInitiatePayment(array $init): void
     {
-        $response = $this->createMock(ResponseInterface::class);
+        $response = $this->createStub(ResponseInterface::class);
         $response->method('getStatusCode')->willReturn(302);
         $response->method('getHeaders')->with(false)->willReturn(['location' => [self::$LOCATION]]);
 
@@ -57,11 +72,28 @@ class ClientTest extends TestCase
         $this->assertEquals(self::$LOCATION, $location);
     }
 
+    public static function initiatePaymentProvider(): array
+    {
+        $defaults = [
+            'metadata' => 'order-1234',
+            'urn' => self::$URN,
+            'amount' => 1234,
+            'email' => self::$EMAIL,
+        ];
+
+        return [
+            'with all the mandatory values' => [$defaults],
+            'with a note' => [[...$defaults, 'note' => 'order note']],
+            'with an expiry date' => [[...$defaults, 'date' => '2025-04-03T12:57:16.000Z']],
+            'with a minimum card amount' => [[...$defaults, 'constraints' => ['minimum_card_amount' => 56]]],
+        ];
+    }
+
     public function testInitiatePaymentFailsToResolveALocation(): void
     {
         $init = ['metadata' => 'order-1234', 'urn' => self::$URN, 'amount' => 1234, 'email' => self::$EMAIL];
 
-        $response = $this->createMock(ResponseInterface::class);
+        $response = $this->createStub(ResponseInterface::class);
         $response->method('getStatusCode')->willReturn(200);
 
         $api = $this->createMock(Api::class);
@@ -79,35 +111,10 @@ class ClientTest extends TestCase
         $client->initiatePayment($init);
     }
 
-    public static function initiateSubscriptionProvider(): array
-    {
-        $defaults = [
-          'metadata' => 'subscription-1234',
-          'urn' => self::$URN,
-          'amount' => 1234,
-          'email' => self::$EMAIL,
-          'repetition' => [
-            'granularity' => 'weekly',
-            'period' => 2,
-            'weekdays' => ['tuesday', 'friday']
-          ]
-        ];
-
-        return [
-            'with all the mandatory values'  => [$defaults],
-            'with a note' => [[...$defaults, 'note' => 'subscription note']],
-            'with an ending' => [[...$defaults, 'ending' => ['condition' => 'date', 'date' => '2024-01-16T11:13:20.000Z']]],
-            'with an additional one time payment' => [[...$defaults, 'additional_one_time_payment' => [
-              'amount' => 678,
-              'metadata' => 'order-5678',
-            ]]]
-        ];
-    }
-
     #[DataProvider('initiateSubscriptionProvider')]
     public function testInitiateSubscription(array $init): void
     {
-        $response = $this->createMock(ResponseInterface::class);
+        $response = $this->createStub(ResponseInterface::class);
         $response->method('getStatusCode')->willReturn(302);
         $response->method('getHeaders')->with(false)->willReturn(['location' => [self::$LOCATION]]);
 
@@ -126,21 +133,46 @@ class ClientTest extends TestCase
         $this->assertEquals(self::$LOCATION, $location);
     }
 
+    public static function initiateSubscriptionProvider(): array
+    {
+        $defaults = [
+            'metadata' => 'subscription-1234',
+            'urn' => self::$URN,
+            'amount' => 1234,
+            'email' => self::$EMAIL,
+            'repetition' => [
+                'granularity' => 'weekly',
+                'period' => 2,
+                'weekdays' => ['tuesday', 'friday'],
+            ],
+        ];
+
+        return [
+            'with all the mandatory values' => [$defaults],
+            'with a note' => [[...$defaults, 'note' => 'subscription note']],
+            'with an ending' => [[...$defaults, 'ending' => ['condition' => 'date', 'date' => '2024-01-16T11:13:20.000Z']]],
+            'with an additional one time payment' => [[...$defaults, 'additional_one_time_payment' => [
+                'amount' => 678,
+                'metadata' => 'order-5678',
+            ]]],
+        ];
+    }
+
     public function testInitiateSubscriptionFailsToResolveALocation(): void
     {
         $init = [
-          'metadata' => 'subscription-1234',
-          'urn' => self::$URN,
-          'amount' => 1234,
-          'email' => self::$EMAIL,
-          'repetition' => [
-            'granularity' => 'week',
-            'period' => 2,
-            'weekdays' => ['tuesday', 'friday']
-          ]
+            'metadata' => 'subscription-1234',
+            'urn' => self::$URN,
+            'amount' => 1234,
+            'email' => self::$EMAIL,
+            'repetition' => [
+                'granularity' => 'week',
+                'period' => 2,
+                'weekdays' => ['tuesday', 'friday'],
+            ],
         ];
 
-        $response = $this->createMock(ResponseInterface::class);
+        $response = $this->createStub(ResponseInterface::class);
         $response->method('getStatusCode')->willReturn(200);
 
         $api = $this->createMock(Api::class);
@@ -158,18 +190,10 @@ class ClientTest extends TestCase
         $client->initiateSubscription($init);
     }
 
-    public static function updatePaymentMethodProvider(): array
-    {
-        return [
-            'change to card payment'  => [['type' => 'card', 'amount' => 234]],
-            'change to childcare voucher payment'  => [['type' => 'childcare-voucher', 'amount' => 234, 'voucher_provider' => 'fun_for_kids']],
-        ];
-    }
-
     #[DataProvider('updatePaymentMethodProvider')]
     public function testUpdatePaymentMethod(array $update): void
     {
-        $response = $this->createMock(ResponseInterface::class);
+        $response = $this->createStub(ResponseInterface::class);
         $response->method('getStatusCode')->willReturn(204);
 
         $api = $this->createMock(Api::class);
@@ -192,11 +216,19 @@ class ClientTest extends TestCase
         $client->updatePaymentMethod('cb35f971', [...$update, 'urn' => self::$URN, 'email' => self::$EMAIL]);
     }
 
+    public static function updatePaymentMethodProvider(): array
+    {
+        return [
+            'change to card payment' => [['type' => 'card', 'amount' => 234]],
+            'change to childcare voucher payment' => [['type' => 'childcare-voucher', 'amount' => 234, 'voucher_provider' => 'fun_for_kids']],
+        ];
+    }
+
     public function testUpdatePaymentMethodFailsTheRequest(): void
     {
         $update = ['type' => 'card', 'amount' => 234];
 
-        $response = $this->createMock(ResponseInterface::class);
+        $response = $this->createStub(ResponseInterface::class);
         $response->method('getStatusCode')->willReturn(200);
 
         $api = $this->createMock(Api::class);
@@ -224,7 +256,7 @@ class ClientTest extends TestCase
     {
         $refund = ['amount' => 234];
 
-        $response = $this->createMock(ResponseInterface::class);
+        $response = $this->createStub(ResponseInterface::class);
         $response->method('getStatusCode')->willReturn(204);
 
         $api = $this->createMock(Api::class);
@@ -251,7 +283,7 @@ class ClientTest extends TestCase
     {
         $refund = ['amount' => 234];
 
-        $response = $this->createMock(ResponseInterface::class);
+        $response = $this->createStub(ResponseInterface::class);
         $response->method('getStatusCode')->willReturn(200);
 
         $api = $this->createMock(Api::class);
@@ -277,7 +309,7 @@ class ClientTest extends TestCase
 
     public function testCancelPayment(): void
     {
-        $response = $this->createMock(ResponseInterface::class);
+        $response = $this->createStub(ResponseInterface::class);
         $response->method('getStatusCode')->willReturn(204);
 
         $api = $this->createMock(Api::class);
@@ -302,7 +334,7 @@ class ClientTest extends TestCase
 
     public function testCancelPaymentFailsTheRequest(): void
     {
-        $response = $this->createMock(ResponseInterface::class);
+        $response = $this->createStub(ResponseInterface::class);
         $response->method('getStatusCode')->willReturn(200);
 
         $api = $this->createMock(Api::class);
@@ -328,7 +360,7 @@ class ClientTest extends TestCase
 
     public function testCancelRecursion(): void
     {
-        $response = $this->createMock(ResponseInterface::class);
+        $response = $this->createStub(ResponseInterface::class);
         $response->method('getStatusCode')->willReturn(204);
 
         $api = $this->createMock(Api::class);
@@ -353,7 +385,7 @@ class ClientTest extends TestCase
 
     public function testCancelRecursionFailsTheRequest(): void
     {
-        $response = $this->createMock(ResponseInterface::class);
+        $response = $this->createStub(ResponseInterface::class);
         $response->method('getStatusCode')->willReturn(200);
 
         $api = $this->createMock(Api::class);
