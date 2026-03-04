@@ -12,7 +12,7 @@ use function PonchoPay\createToken;
 /**
  * @internal
  *
- * @coversNothing
+ * @covers \PonchoPay\Token
  */
 class TokenTest extends TestCase
 {

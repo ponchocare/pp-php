@@ -17,7 +17,7 @@ This package declares the following functions:
 - [createJWT](https://github.com/ponchocare/pp-php/blob/master/docs/token/createJWT.md): This function allows the creation of JWTs for the payment manipulation endpoints.
 
 And the `Client` class which provides the following methods:
-- [validateLocationUrn](https://github.com/ponchocare/pp-php/blob/master/docs/client/validateLocationUrn.md): This method allows to validate a location to ensure it is ready to process payments.
+- [validateLocationUrn](https://github.com/ponchocare/pp-php/blob/master/docs/client/validateLocationUrn.md): This method allows you to validate a location to ensure it is ready to process payments.
 - [initiatePayment](https://github.com/ponchocare/pp-php/blob/master/docs/client/initiatePayment.md): This method allows to initialise a payment in PonchoPay.
 - [initiateSubscription](https://github.com/ponchocare/pp-php/blob/master/docs/client/initiateSubscription.md): This method allows to initialise a subscription in PonchoPay.
 - [updatePaymentMethod](https://github.com/ponchocare/pp-php/blob/master/docs/client/updatePaymentMethod.md): This method allows to change the Payment Method properties.

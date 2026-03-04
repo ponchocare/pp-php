@@ -1,6 +1,6 @@
 # validateLocationUrn
 
-This method allows to validate a location to ensure it is ready to process payments.
+This method allows you to validate a location to ensure it is ready to process payments.
 
 ## How to
 

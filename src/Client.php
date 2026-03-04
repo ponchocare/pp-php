@@ -26,10 +26,10 @@ final class Client
      * @param array{urn: string, email: string} $payload
      *
      * @return object{
-     *   isEnabled: bool,
-     *   isVisible: bool,
-     *   isBeta: bool,
-     *   isDeprecated: bool
+     *   verification_status: bool,
+     *   card_payments_enabled: bool,
+     *   childcare_voucher_payments_enabled: bool,
+     *   tax_free_childcare_payments_enabled: bool
      * }
      */
     public function validateLocationUrn(array $payload): object
@@ -174,7 +174,13 @@ final class Client
 
         $body = $response->getContent();
 
-        return json_decode($body);
+
+        $decoded = json_decode($body, false, 512, JSON_THROW_ON_ERROR);
+        if (!\is_object($decoded)) {
+            throw new PonchoPayException('Unexpected response body. Expected JSON object.');
+        }
+
+        return $decoded;
     }
 
     private function issuePutRequest(string $url, array $data): void
