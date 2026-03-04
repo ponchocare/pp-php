@@ -14,10 +14,25 @@ class Api
     private HttpClientInterface $client;
     private string $base;
 
-    public function __construct(string $base = 'https://pay.ponchopay.com/')
+    public function __construct(string $base)
     {
         $this->client = HttpClient::create();
         $this->base = $base;
+    }
+
+    public function makeGetRequest(string $path, array $headers): ResponseInterface
+    {
+        return $this->makeRequest('GET', $path, $headers, '');
+    }
+
+    public function makePostRequest(string $path, array $headers, string $body): ResponseInterface
+    {
+        return $this->makeRequest('POST', $path, $headers, $body);
+    }
+
+    public function makePutRequest(string $path, array $headers, string $body): ResponseInterface
+    {
+        return $this->makeRequest('PUT', $path, $headers, $body);
     }
 
     private function getUrl(string $path): string
@@ -28,27 +43,17 @@ class Api
     private function getHeaders(): array
     {
         return [
-          'content-type' => 'application/json',
-          'x-telemetry' => json_encode(telemetry()),
+            'content-type' => 'application/json',
+            'x-telemetry' => json_encode(telemetry()),
         ];
     }
 
-    public function makePostRequest(string $path, array $headers, string $body): ResponseInterface
+    private function makeRequest(string $method, string $path, array $headers, string $body): ResponseInterface
     {
-        return $this->client->request('POST', $this->getUrl($path), [
+        return $this->client->request($method, $this->getUrl($path), [
             'headers' => [...$headers, ...$this->getHeaders()],
             'body' => $body,
-            'max_redirects' => 0
-        ]);
-    }
-
-
-    public function makePutRequest(string $path, array $headers, string $body): ResponseInterface
-    {
-        return $this->client->request('PUT', $this->getUrl($path), [
-            'headers' => [...$headers, ...$this->getHeaders()],
-            'body' => $body,
-            'max_redirects' => 0
+            'max_redirects' => 0,
         ]);
     }
 }

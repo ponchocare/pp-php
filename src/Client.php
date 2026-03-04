@@ -2,13 +2,8 @@
 
 namespace PonchoPay;
 
-use PonchoPay\Api;
-use PonchoPay\PonchoPayException;
-
-use function PonchoPay\createToken;
-use function PonchoPay\createJWT;
-use function PonchoPay\Utils\serialise;
 use function PonchoPay\Utils\replaceParams;
+use function PonchoPay\Utils\serialise;
 
 /**
  * PonchoPay client.
@@ -25,35 +20,21 @@ final class Client
         $this->key = $key;
     }
 
-    private function getRedirectLocation(string $url, array $data): string
+    /**
+     * Validates whether a location is able to process payments.
+     *
+     * @param array{urn: string, email: string} $payload
+     *
+     * @return object{
+     *   verification_status: bool,
+     *   card_payments_enabled: bool,
+     *   childcare_voucher_payments_enabled: bool,
+     *   tax_free_childcare_payments_enabled: bool
+     * }
+     */
+    public function validateLocationUrn(array $payload): object
     {
-        $body = serialise([
-            ...$data,
-            'token' => createToken($this->key, $data['metadata'])
-        ]);
-
-        $response = $this->api->makePostRequest($url, [], $body);
-        if ($response->getStatusCode() === 302) {
-            return $response->getHeaders(false)['location'][0];
-        }
-
-        throw new PonchoPayException("Unexpected response. Expected 302 as status code but {$response->getStatusCode()} was received");
-    }
-
-    private function issuePutRequest(string $url, array $data): void
-    {
-        $urn = $data['urn'];
-        $email = $data['email'];
-
-        $body = serialise(array_diff_key($data, ['urn' => $urn, 'email' => $email]));
-        $jwt = createJWT($urn, $this->key, $email, $body);
-
-        $headers = ['Authorization' => 'Bearer ' . $jwt];
-        $response = $this->api->makePutRequest($url, $headers, $body);
-
-        if ($response->getStatusCode() !== 204) {
-            throw new PonchoPayException("Unexpected response. Expected 204 as status code but {$response->getStatusCode()} was received");
-        }
+        return $this->issueGetRequest('/api/integration/validate', $payload);
     }
 
     /**
@@ -66,7 +47,7 @@ final class Client
      *    amount: int,
      *    email: string,
      *    note?: string,
-     *    expiry?: string | \DateTimeInterface,
+     *    expiry?: \DateTimeInterface|string,
      *    constraints?: array{
      *        minimum_card_amount?: int
      *    },
@@ -118,7 +99,7 @@ final class Client
      * @param array{
      *    urn: string,
      *    email: string,
-     *    type: 'card' | 'childcare-voucher' | 'tax-free-childcare',
+     *    type: 'card'|'childcare-voucher'|'tax-free-childcare',
      *    amount: int,
      *    voucher_provider?: string
      * } $update
@@ -160,5 +141,61 @@ final class Client
     {
         $path = replaceParams('/api/recursion/[recursionId]/cancel', ['recursionId' => $recursionId]);
         $this->issuePutRequest($path, $payload);
+    }
+
+    private function getRedirectLocation(string $url, array $data): string
+    {
+        $body = serialise([
+            ...$data,
+            'token' => createToken($this->key, $data['metadata']),
+        ]);
+
+        $response = $this->api->makePostRequest($url, [], $body);
+        if (302 === $response->getStatusCode()) {
+            return $response->getHeaders(false)['location'][0];
+        }
+
+        throw new PonchoPayException("Unexpected response. Expected 302 as status code but {$response->getStatusCode()} was received");
+    }
+
+    private function issueGetRequest(string $url, array $data): object
+    {
+        $urn = $data['urn'];
+        $email = $data['email'];
+
+        $jwt = createJWT($urn, $this->key, $email, '');
+
+        $headers = ['Authorization' => 'Bearer '.$jwt];
+        $response = $this->api->makeGetRequest($url, $headers);
+
+        if (200 !== $response->getStatusCode()) {
+            throw new PonchoPayException("Unexpected response. Expected 200 as status code but {$response->getStatusCode()} was received");
+        }
+
+        $body = $response->getContent();
+
+
+        $decoded = json_decode($body, false, 512, JSON_THROW_ON_ERROR);
+        if (!\is_object($decoded)) {
+            throw new PonchoPayException('Unexpected response body. Expected JSON object.');
+        }
+
+        return $decoded;
+    }
+
+    private function issuePutRequest(string $url, array $data): void
+    {
+        $urn = $data['urn'];
+        $email = $data['email'];
+
+        $body = serialise(array_diff_key($data, ['urn' => $urn, 'email' => $email]));
+        $jwt = createJWT($urn, $this->key, $email, $body);
+
+        $headers = ['Authorization' => 'Bearer '.$jwt];
+        $response = $this->api->makePutRequest($url, $headers, $body);
+
+        if (204 !== $response->getStatusCode()) {
+            throw new PonchoPayException("Unexpected response. Expected 204 as status code but {$response->getStatusCode()} was received");
+        }
     }
 }
