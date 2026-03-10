@@ -9,7 +9,7 @@ use Firebase\JWT\JWT;
  */
 function createToken(string $key, string $metadata): string
 {
-    return base64_encode(hash('sha256', $metadata . '.' .$key, true));
+    return base64_encode(hash('sha256', $metadata.'.'.$key, true));
 }
 
 /**
@@ -18,6 +18,7 @@ function createToken(string $key, string $metadata): string
 function createJWT(string $urn, string $key, string $email, string $data): string
 {
     $now = time();
+
     return JWT::encode([
         'urn' => $urn,
         'email' => $email,
