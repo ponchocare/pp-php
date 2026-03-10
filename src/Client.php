@@ -70,6 +70,11 @@ final class Client
      *    constraints?: array{
      *        minimum_card_amount?: int
      *    },
+     *    line_items?: array{
+     *        description: string,
+     *        amount: int,
+     *        quantity: int
+     *    }[]
      * } $init
      */
     public function initiatePayment(array $init): string
