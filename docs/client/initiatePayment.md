@@ -38,6 +38,7 @@ PaymentInit:
 | note        | No        | string                      | Any note to be attached to the payment                              |
 | expiry      | No        | \DateTimeInterface / string | The date you want the payment to expire (Check `DateValue` details) |
 | constraints | No        | array                       | Constraints for the payment (Check `Constraints` details)           |
+| line_items  | No        | array                       | Array of line items for the payment (Check `LineItem` details)      |
 
 DateValue:
 
@@ -48,6 +49,14 @@ Constraints:
 | Parameter           | Mandatory | Type    | Description                                               |
 | ------------------- | --------- | ------- | --------------------------------------------------------- |
 | minimum_card_amount | No        | integer | Minimum amount that must be processed with a card payment |
+
+LineItem:
+
+| Parameter   | Mandatory | Type    | Description                        |
+| ----------- | --------- | ------- | ---------------------------------- |
+| description | Yes       | string  | Description of the line item       |
+| amount      | Yes       | integer | Amount for a single unit in pences |
+| quantity    | Yes       | integer | Quantity of this item              |
 
 Returns:
 
