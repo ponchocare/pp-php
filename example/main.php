@@ -62,6 +62,9 @@ $payment = $client->initiatePayment([
     'metadata' => $metadata,
     'urn' => $urn,
     'email' => $email,
+    'line_items' => [
+        ['description' => 'Item 1', 'amount' => 2034, 'quantity' => 1],
+    ]
 ]);
 
 echo "\n";

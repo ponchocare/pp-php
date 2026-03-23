@@ -47,12 +47,12 @@ class UtilsTest extends TestCase
             'dates' => [\DateTime::createFromFormat('U', 1744115983), '"2025-04-08T12:39:43+00:00"'],
             'associative array' => [['key1' => 'value1', 'key2' => 456], '{"key1":"value1","key2":456}'],
             'empty array' => [[], ''],
-             'line_items array' => [
+            'array of objects' => [
             [
-                ['description' => 'Item 1', 'amount' => 100, 'quantity' => 2],
-                ['description' => 'Item 2', 'amount' => 50, 'quantity' => 1]
+                ['key1' => 'Item 1', 'key2' => 100, 'key3' => 2],
+                ['key1' => 'Item 2', 'key2' => 50, 'key3' => 1]
             ],
-                '[{"description":"Item 1","amount":100,"quantity":2},{"description":"Item 2","amount":50,"quantity":1}]'
+                '[{"key1":"Item 1","key2":100,"key3":2},{"key1":"Item 2","key2":50,"key3":1}]'
             ],
         ];
     }

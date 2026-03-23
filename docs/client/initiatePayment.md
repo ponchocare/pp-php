@@ -38,7 +38,7 @@ PaymentInit:
 | note        | No        | string                      | Any note to be attached to the payment                              |
 | expiry      | No        | \DateTimeInterface / string | The date you want the payment to expire (Check `DateValue` details) |
 | constraints | No        | array                       | Constraints for the payment (Check `Constraints` details)           |
-| line_items  | No        | array                       | Array of line items for the payment (Check `LineItem` details)      |
+| line_items  | No        | array                       | Array of products to pay for (Check `LineItem` details)             |
 
 DateValue:
 
@@ -55,7 +55,7 @@ LineItem:
 | Parameter   | Mandatory | Type    | Description                        |
 | ----------- | --------- | ------- | ---------------------------------- |
 | description | Yes       | string  | Description of the line item       |
-| amount      | Yes       | integer | Amount for a single unit in pences |
+| amount      | Yes       | integer | Amount for the line item in pences |
 | quantity    | Yes       | integer | Quantity of this item              |
 
 Returns:

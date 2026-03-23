@@ -79,6 +79,9 @@ class ClientTest extends TestCase
             'urn' => self::$URN,
             'amount' => 1234,
             'email' => self::$EMAIL,
+            'line_items' => [
+                ['description' => 'Item 1', 'amount' => 1234, 'quantity' => 1]
+            ],
         ];
 
         return [
