@@ -79,9 +79,6 @@ class ClientTest extends TestCase
             'urn' => self::$URN,
             'amount' => 1234,
             'email' => self::$EMAIL,
-            'line_items' => [
-                ['description' => 'Item 1', 'amount' => 1234, 'quantity' => 1]
-            ],
         ];
 
         return [
@@ -89,6 +86,10 @@ class ClientTest extends TestCase
             'with a note' => [[...$defaults, 'note' => 'order note']],
             'with an expiry date' => [[...$defaults, 'date' => '2025-04-03T12:57:16.000Z']],
             'with a minimum card amount' => [[...$defaults, 'constraints' => ['minimum_card_amount' => 56]]],
+            'with line items' => [[...$defaults, 'line_items' => [
+                ['description' => 'item 1', 'amount' => 1000, 'quantity' => 1],
+                ['description' => 'item 2', 'amount' => 234, 'quantity'  => 1],
+            ]]],
         ];
     }
 
