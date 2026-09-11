@@ -10,7 +10,7 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
 /**
  * @internal
  *
- * @covers \PonchoPay\Api
+ * @coversNothing
  */
 class ApiTest extends TestCase
 {
@@ -41,12 +41,14 @@ class ApiTest extends TestCase
                 $this->assertEquals('', $value['body']);
                 $this->assertArrayHasKey('max_redirects', $value);
                 $this->assertEquals(0, $value['max_redirects']);
+                $this->assertArrayHasKey('x-extra', $value['headers']);
+                $this->assertEquals('header', $value['headers']['x-extra']);
 
                 return true;
             })
         )->willReturn($expectedResponse);
 
-        $api = new Api('proto://base');
+        $api = new Api('proto://base', ['x-extra' => 'header']);
         (fn () => $this->client = $client)->call($api);
 
         $response = $api->makeGetRequest(self::$PATH, self::$HEADERS);
@@ -74,12 +76,14 @@ class ApiTest extends TestCase
                 $this->assertEquals(self::$BODY, $value['body']);
                 $this->assertArrayHasKey('max_redirects', $value);
                 $this->assertEquals(0, $value['max_redirects']);
+                $this->assertArrayHasKey('x-extra', $value['headers']);
+                $this->assertEquals('header', $value['headers']['x-extra']);
 
                 return true;
             })
         )->willReturn($expectedResponse);
 
-        $api = new Api('proto://base');
+        $api = new Api('proto://base', ['x-extra' => 'header']);
         (fn () => $this->client = $client)->call($api);
 
         $response = $api->makePostRequest(self::$PATH, self::$HEADERS, self::$BODY);
@@ -107,12 +111,14 @@ class ApiTest extends TestCase
                 $this->assertEquals(self::$BODY, $value['body']);
                 $this->assertArrayHasKey('max_redirects', $value);
                 $this->assertEquals(0, $value['max_redirects']);
+                $this->assertArrayHasKey('x-extra', $value['headers']);
+                $this->assertEquals('header', $value['headers']['x-extra']);
 
                 return true;
             })
         )->willReturn($expectedResponse);
 
-        $api = new Api('proto://base');
+        $api = new Api('proto://base', ['x-extra' => 'header']);
         (fn () => $this->client = $client)->call($api);
 
         $response = $api->makePutRequest(self::$PATH, self::$HEADERS, self::$BODY);
