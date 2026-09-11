@@ -2,35 +2,50 @@
 
 namespace PonchoPay;
 
+use PonchoPay\Utils\Binary;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\StreamInterface;
+
+use function PonchoPay\Utils\deserialise;
 use function PonchoPay\Utils\replaceParams;
 use function PonchoPay\Utils\serialise;
+use function PonchoPay\Utils\sha256Hmac;
 
 /**
- * PonchoPay client.
- * It collects the methods to manipulate payments in PonchoPay.
+ * Initializes a new instance of the Client. This sets up the core API connection
+ * using the provided API key and determines the API client instance based on
+ * whether an existing Api object or a base URL string is provided.
  */
 final class Client
 {
     private Api $api;
     private string $key;
 
-    public function __construct(string $key, string $base = 'https://pay.ponchopay.com/')
+    /**
+     * @param string     $key  the integration key found in the https://pay.ponchopay.com/provider/admin/settings/api-integration page
+     * @param Api|string $base if an existing Api object is passed, it will be used;
+     *                         otherwise, the base URL string is used to instantiate a new Api object
+     */
+    public function __construct(string $key, Api|string $base = 'https://pay.ponchopay.com/')
     {
-        $this->api = new Api($base);
+        $this->api = $base instanceof Api ? $base : new Api($base);
         $this->key = $key;
     }
 
     /**
-     * Validates whether a location is able to process payments.
+     * Validates the payment processing capabilities for a specified location URN.
+     * This function is used to check which payment methods are available at a given location.
      *
-     * @param array{urn: string, email: string} $payload
+     * @param array{urn: string, email: string} $payload an associative array containing at the 'urn' (Unique Resource Name) and 'email' required for location identification
      *
      * @return object{
      *   verification_status: bool,
      *   card_payments_enabled: bool,
      *   childcare_voucher_payments_enabled: bool,
      *   tax_free_childcare_payments_enabled: bool
-     * }
+     * } an object structure detailing payment enablement flags as boolean values
+     *
+     * @throw TransportExceptionInterface if the underlying HTTP client fails to execute the request due to connectivity, timeouts, or server errors
      */
     public function validateLocationUrn(array $payload): object
     {
@@ -38,8 +53,7 @@ final class Client
     }
 
     /**
-     * Initiates a payment.
-     * This method returns a URL to redirect the user to.
+     * Initiates the payment transaction process for a user.
      *
      * @param array{
      *    metadata: string,
@@ -56,7 +70,11 @@ final class Client
      *        amount: int,
      *        quantity: int
      *    }[]
-     * } $init
+     * } $init a comprehensive associative array containing all necessary payment details:
+     *
+     * @return string the redirect URL that the user's browser must navigate to in order to complete the payment
+     *
+     * @throw TransportExceptionInterface if the underlying HTTP client fails to execute the request due to connectivity, timeouts, or server errors
      */
     public function initiatePayment(array $init): string
     {
@@ -64,8 +82,7 @@ final class Client
     }
 
     /**
-     * Initiates a subscription.
-     * This method returns a URL to redirect the user to.
+     * Initiates the process for setting up a recurring subscription payment.
      *
      * @param array{
      *    urn: string,
@@ -73,25 +90,20 @@ final class Client
      *    metadata: string,
      *    note?: string,
      *    email: string,
-     *    repetition:
-     *        array{granularity: 'day', period: int} |
-     *        array{granularity: 'week', period: int, weekdays: string[]} |
-     *        array{granularity: 'month', period: int, day: int} |
-     *        array{granularity: 'year', period: int},
-     *    ending?:
-     *        array{condition: 'never'} |
-     *        array{condition: 'occurrences', occurrences: int} |
-     *        array{condition: 'date', date: string | \DateTimeInterface},
+     *    repetition: array{granularity: 'day', period: int}|array{granularity: 'month', period: int, day: int}|array{granularity: 'week', period: int, weekdays: string[]}|array{granularity: 'year', period: int},
+     *    ending?: array{condition: 'date', date: \DateTimeInterface|string}|array{condition: 'never'}|array{condition: 'occurrences', occurrences: int},
      *    additional_one_time_payment?: array{
      *        metadata: string,
      *        amount: int,
      *        note?: string,
-     *        expiry?: string | \DateTimeInterface,
-     *        constraints?: array{
-     *            minimum_card_amount?: int
-     *       }
+     *        expiry?: \DateTimeInterface|string,
+     *        constraints?: array{minimum_card_amount?: int}
      *    }
-     * } $init
+     * } $init a comprehensive array containing all necessary details for defining the subscription:
+     *
+     * @return string the redirect URL that the user's browser must navigate to in order to setup the subscription
+     *
+     * @throw TransportExceptionInterface if the underlying HTTP client fails to execute the request due to connectivity, timeouts, or server errors
      */
     public function initiateSubscription(array $init): string
     {
@@ -99,15 +111,18 @@ final class Client
     }
 
     /**
-     * Updates a single payment method within a payment.
+     * Updates specific details for an existing payment method associated with a payment record.
      *
+     * @param string $paymentMethodId the unique identifier (URN or ID) of the payment method to be modified
      * @param array{
      *    urn: string,
      *    email: string,
      *    type: 'card'|'childcare-voucher'|'tax-free-childcare',
      *    amount: int,
      *    voucher_provider?: string
-     * } $update
+     * } $update an associative array containing the updated payment details. This array must include:
+     *
+     * @throw TransportExceptionInterface if the underlying HTTP client fails to execute the request due to connectivity, timeouts, or server errors
      */
     public function updatePaymentMethod(string $paymentMethodId, array $update): void
     {
@@ -118,7 +133,8 @@ final class Client
     /**
      * Refunds a single payment method within a payment.
      *
-     * @param array{urn: string, email: string, amount: int} $refund
+     * @param string                                         $paymentMethodId the unique identifier for the payment method to be refunded
+     * @param array{urn: string, email: string, amount: int} $refund          the refund payload
      */
     public function refundPaymentMethod(string $paymentMethodId, array $refund): void
     {
@@ -129,7 +145,8 @@ final class Client
     /**
      * Requests the cancelation of a payment.
      *
-     * @param array{urn: string, email: string} $payload
+     * @param string                            $paymentId the unique identifier of the payment to be cancelled
+     * @param array{urn: string, email: string} $payload   the cancellation payload
      */
     public function cancelPayment(string $paymentId, array $payload): void
     {
@@ -140,7 +157,8 @@ final class Client
     /**
      * Requests the cancelation of a recursion.
      *
-     * @param array{urn: string, email: string} $payload
+     * @param string                            $recursionId the unique identifier of the recursion to be cancelled
+     * @param array{urn: string, email: string} $payload     the payload containing URN and email for cancellation confirmation
      */
     public function cancelRecursion(string $recursionId, array $payload): void
     {
@@ -148,6 +166,132 @@ final class Client
         $this->issuePutRequest($path, $payload);
     }
 
+    /**
+     * Checks if the provided data is a valid callback signature by comparing it against a computed HMAC hash.
+     *
+     * @param string                 $signature the expected SHA256 HMAC signature string
+     * @param StreamInterface|string $payload   the data received in the callback. This can be a `StreamInterface`
+     *                                          object or a raw string.
+     *
+     * @return bool returns `true` if the signature matches the generated hash, `false` otherwise
+     */
+    public function isValidCallback(string $signature, StreamInterface|string $payload): bool
+    {
+        $data = $this->getRawData($payload);
+
+        return $signature === sha256Hmac($this->key, $data);
+    }
+
+    /**
+     * Validates an incoming HTTP request by checking its security signature against the configured API key.
+     *
+     * @param RequestInterface $request the incoming PSR-7 request object containing the signature in the header and the body
+     *
+     * @return bool returns `true` if the request signature is valid, otherwise it returns `false`
+     *
+     * @throw PonchoPayException if the signature header is missing or if the body content is invalid
+     */
+    public function isValidRequest(RequestInterface $request): bool
+    {
+        return $this->isValidCallback($this->getSignature($request), $request->getBody());
+    }
+
+    /**
+     * Decodes and validates a payment gateway callback payload received via the request body.
+     *
+     * @param string                 $signature the expected SHA256 HMAC signature provided in the request headers
+     * @param StreamInterface|string $payload   The body content of the incoming callback request. This can be a `StreamInterface`
+     *                                          object or a raw string.
+     *
+     * @return object the fully parsed and validated payload object from the callback
+     *
+     * @throw PonchoPayException if the signature does not match, the body is not valid JSON, or any other processing error occurs.
+     */
+    public function parseCallback(string $signature, StreamInterface|string $payload): object
+    {
+        $data = $this->getRawData($payload);
+        $isValid = $this->isValidCallback($signature, $data);
+        if (!$isValid) {
+            throw new PonchoPayException('Callback request failed the security signature');
+        }
+
+        return deserialise($data);
+    }
+
+    /**
+     * Parses an incoming HTTP request object by extracting the signature from the headers and validating the body.
+     *
+     * @param RequestInterface $request the incoming PSR-7 request object
+     *
+     * @return object the fully parsed and validated payload object from the request
+     *
+     * @throw PonchoPayException if the signature header is missing or if the body content is invalid.
+     */
+    public function parseRequest(RequestInterface $request): object
+    {
+        return $this->parseCallback($this->getSignature($request), $request->getBody());
+    }
+
+    /**
+     * Extracts the security signature from the incoming PSR-7 Request object.
+     * This method ensures that exactly one 'signature' header is present and returns its value.
+     *
+     * @param RequestInterface $request the incoming request containing the signature in its headers
+     *
+     * @return string the raw signature string obtained from the request header
+     *
+     * @throw PonchoPayException if the signature header is missing or if multiple signature headers are present.
+     */
+    private function getSignature(RequestInterface $request): string
+    {
+        $headers = $request->getHeader('signature');
+        if (0 === count($headers)) {
+            throw new PonchoPayException('Signature header not found');
+        }
+        if (count($headers) > 1) {
+            throw new PonchoPayException('Multiple signature headers found');
+        }
+
+        return $headers[0];
+    }
+
+    /**
+     * Reads the raw content from a StreamInterface request body, ensuring it does not exceed a defined limit.
+     *
+     * @param StreamInterface|string $payload the incoming stream object from the request or string data
+     *
+     * @return string the raw, readable string content from the body
+     *
+     * @throw PonchoPayException if the stream is unexpectedly long or if reading the stream fails.
+     */
+    private function getRawData(StreamInterface|string $payload): string
+    {
+        if ($payload instanceof StreamInterface) {
+            $data = $payload->read(Binary::fromMebibytes(2)->toBytes()); // 2 MiB should be enough for standard PonchoPay interactions
+            if (!$payload->eof()) {
+                throw new PonchoPayException('Stream too long. Expected a maximum of 2 MiB');
+            }
+
+            if ($payload->isSeekable()) {
+                $payload->rewind();
+            }
+
+            return $data;
+        }
+
+        return $payload;
+    }
+
+    /**
+     * Handles the logic for redirecting a user to the payment portal by issuing a POST request.
+     *
+     * @param string           $url  the API endpoint URL to initiate the redirect process
+     * @param array<int,mixed> $data the array of initial payment data to be sent
+     *
+     * @return string the final redirect URL obtained from the API response headers
+     *
+     * @throws PonchoPayException if the API response status code is not a 302 redirect or if the request fails
+     */
     private function getRedirectLocation(string $url, array $data): string
     {
         $body = serialise([
@@ -163,6 +307,16 @@ final class Client
         throw new PonchoPayException("Unexpected response. Expected 302 as status code but {$response->getStatusCode()} was received");
     }
 
+    /**
+     * Executes an HTTP GET request to the API to retrieve and validate location-specific payment information.
+     *
+     * @param array<string,mixed> $data the associative array containing the resource data to get
+     *
+     * @return object the decoded JSON object containing the payment validation status
+     *
+     * @throws PonchoPayException          if the API response status code is not 200 or if the response body is not a valid JSON object
+     * @throws TransportExceptionInterface If the underlying HTTP client fails to execute the request due to connectivity, timeouts, or server errors
+     */
     private function issueGetRequest(string $url, array $data): object
     {
         $urn = $data['urn'];
@@ -177,17 +331,17 @@ final class Client
             throw new PonchoPayException("Unexpected response. Expected 200 as status code but {$response->getStatusCode()} was received");
         }
 
-        $body = $response->getContent();
-
-
-        $decoded = json_decode($body, false, 512, JSON_THROW_ON_ERROR);
-        if (!\is_object($decoded)) {
-            throw new PonchoPayException('Unexpected response body. Expected JSON object.');
-        }
-
-        return $decoded;
+        return deserialise($response->getContent());
     }
 
+    /**
+     * Executes an HTTP PUT request to the API to modify or update a payment record.
+     *
+     * @param array<string,mixed> $data the associative array containing the resource data to update
+     *
+     * @throws PonchoPayException          if the API response status code is not 204 No Content or if the request fails
+     * @throws TransportExceptionInterface if the underlying HTTP client fails to execute the request due to connectivity, timeouts, or server errors
+     */
     private function issuePutRequest(string $url, array $data): void
     {
         $urn = $data['urn'];
