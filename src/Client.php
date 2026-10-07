@@ -113,14 +113,14 @@ final class Client
     /**
      * Updates specific details for an existing payment method associated with a payment record.
      *
-     * @param string $paymentMethodId the unique identifier (URN or ID) of the payment method to be modified
+     * @param string $paymentMethodId the identifier of the payment method to be modified
      * @param array{
      *    urn: string,
      *    email: string,
      *    type: 'card'|'childcare-voucher'|'tax-free-childcare',
      *    amount: int,
      *    voucher_provider?: string
-     * } $update an associative array containing the updated payment details. This array must include:
+     * } $update an associative array containing the updated payment details
      *
      * @throw TransportExceptionInterface if the underlying HTTP client fails to execute the request due to connectivity, timeouts, or server errors
      */
@@ -133,7 +133,7 @@ final class Client
     /**
      * Refunds a single payment method within a payment.
      *
-     * @param string                                         $paymentMethodId the unique identifier for the payment method to be refunded
+     * @param string                                         $paymentMethodId the identifier of the payment method to be refunded
      * @param array{urn: string, email: string, amount: int} $refund          the refund payload
      */
     public function refundPaymentMethod(string $paymentMethodId, array $refund): void
@@ -145,7 +145,7 @@ final class Client
     /**
      * Requests the cancelation of a payment.
      *
-     * @param string                            $paymentId the unique identifier of the payment to be cancelled
+     * @param string                            $paymentId the identifier of the payment method to be cancelled
      * @param array{urn: string, email: string} $payload   the cancellation payload
      */
     public function cancelPayment(string $paymentId, array $payload): void
@@ -158,7 +158,7 @@ final class Client
      * Requests the cancelation of a recursion.
      *
      * @param string                            $recursionId the unique identifier of the recursion to be cancelled
-     * @param array{urn: string, email: string} $payload     the payload containing URN and email for cancellation confirmation
+     * @param array{urn: string, email: string} $payload     the cancellation payload
      */
     public function cancelRecursion(string $recursionId, array $payload): void
     {
@@ -197,7 +197,7 @@ final class Client
     }
 
     /**
-     * Decodes and validates a payment gateway callback payload received via the request body.
+     * Decodes and validates a payment gateway callback payload received.
      *
      * @param string                 $signature the expected SHA256 HMAC signature provided in the request headers
      * @param StreamInterface|string $payload   The body content of the incoming callback request. This can be a `StreamInterface`
@@ -283,7 +283,7 @@ final class Client
     }
 
     /**
-     * Handles the logic for redirecting a user to the payment portal by issuing a POST request.
+     * It consumes endpoints returning redirection URLs. This method extracts the returned redirection.
      *
      * @param string           $url  the API endpoint URL to initiate the redirect process
      * @param array<int,mixed> $data the array of initial payment data to be sent
@@ -310,7 +310,8 @@ final class Client
     /**
      * Executes an HTTP GET request to the API to retrieve and validate location-specific payment information.
      *
-     * @param array<string,mixed> $data the associative array containing the resource data to get
+     * @param string              $url  the API endpoint URL to initiate the redirect process
+     * @param array<string,mixed> $data the data for the location and the authorising email
      *
      * @return object the decoded JSON object containing the payment validation status
      *
@@ -337,7 +338,8 @@ final class Client
     /**
      * Executes an HTTP PUT request to the API to modify or update a payment record.
      *
-     * @param array<string,mixed> $data the associative array containing the resource data to update
+     * @param string              $url  the API endpoint URL to initiate the redirect process
+     * @param array<string,mixed> $data the data for the location, the authorising email, and the endpoint payload
      *
      * @throws PonchoPayException          if the API response status code is not 204 No Content or if the request fails
      * @throws TransportExceptionInterface if the underlying HTTP client fails to execute the request due to connectivity, timeouts, or server errors
