@@ -408,6 +408,43 @@ class ClientTest extends TestCase
         $client->cancelRecursion('kgvkrglq', ['urn' => self::$URN, 'email' => self::$EMAIL]);
     }
 
+    public function testSetKey(): void
+    {
+        $payload = '{"some":"data"}';
+        $signature = '6A54sGX71ohB9F4P05KYXBcQY2Bgob9o1WcGaCxcy1M=';
+        $client = new Client(self::$KEY);
+
+        $this->assertTrue($client->isValidCallback($signature, $payload));
+
+        $client->setKey('another-integration-key');
+
+        $this->assertFalse($client->isValidCallback($signature, $payload));
+        $this->assertTrue($client->isValidCallback('k2FnHBkJRCRrDxUZ68PeePAKxdrQ5BX3R06OM2uHVGg=', $payload));
+    }
+
+    public function testSetKeyIsUsedToSignRequests(): void
+    {
+        $init = ['metadata' => 'order-1234', 'urn' => self::$URN, 'amount' => 1234, 'email' => self::$EMAIL];
+
+        $response = $this->createStub(ResponseInterface::class);
+        $response->method('getStatusCode')->willReturn(302);
+        $response->method('getHeaders')->with(false)->willReturn(['location' => [self::$LOCATION]]);
+
+        $api = $this->createMock(Api::class);
+        $api->expects($this->once())->method('makePostRequest')->with(
+            '/api/integration/generic/initiate',
+            [],
+            serialise([...$init, 'token' => '05Cfmg2JBscJ2qPnADWRYbv4PEmCF2w/nPejAmJqI+E='])
+        )->willReturn($response);
+        $api->expects($this->never())->method('makePutRequest');
+
+        $client = new Client(self::$KEY, $api);
+        $client->setKey('another-integration-key');
+
+        $location = $client->initiatePayment($init);
+        $this->assertEquals(self::$LOCATION, $location);
+    }
+
     #[DataProvider('callbackProvider')]
     public function testIsValidCallback($signature, $payload, $valid, $_): void
     {

@@ -33,6 +33,16 @@ final class Client
     }
 
     /**
+     * Updates the integration key used to sign requests and verify callbacks.
+     *
+     * @param string $key the integration key found in the https://pay.ponchopay.com/provider/admin/settings/api-integration page
+     */
+    public function setKey(string $key): void
+    {
+        $this->key = $key;
+    }
+
+    /**
      * Validates the payment processing capabilities for a specified location URN.
      * This function is used to check which payment methods are available at a given location.
      *
