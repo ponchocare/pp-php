@@ -25,11 +25,11 @@ function sha256(string $data): string
  * @param string $key  the secret key used for HMAC generation
  * @param string $data the data to generate the HMAC hash for
  *
- * @return string the base64 encoded HMAC-SHA256 hash
+ * @return string the URL-safe base64 encoded HMAC-SHA256 hash
  */
 function sha256Hmac(string $key, string $data): string
 {
-    return base64_encode(hash_hmac('sha256', $data, $key, true));
+    return rtrim(strtr(base64_encode(hash_hmac('sha256', $data, $key, true)), '+/', '-_'), '=');
 }
 
 /**

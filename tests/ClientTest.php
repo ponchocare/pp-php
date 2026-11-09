@@ -411,7 +411,7 @@ class ClientTest extends TestCase
     public function testSetKey(): void
     {
         $payload = '{"some":"data"}';
-        $signature = '6A54sGX71ohB9F4P05KYXBcQY2Bgob9o1WcGaCxcy1M=';
+        $signature = '6A54sGX71ohB9F4P05KYXBcQY2Bgob9o1WcGaCxcy1M';
         $client = new Client(self::$KEY);
 
         $this->assertTrue($client->isValidCallback($signature, $payload));
@@ -419,7 +419,7 @@ class ClientTest extends TestCase
         $client->setKey('another-integration-key');
 
         $this->assertFalse($client->isValidCallback($signature, $payload));
-        $this->assertTrue($client->isValidCallback('k2FnHBkJRCRrDxUZ68PeePAKxdrQ5BX3R06OM2uHVGg=', $payload));
+        $this->assertTrue($client->isValidCallback('k2FnHBkJRCRrDxUZ68PeePAKxdrQ5BX3R06OM2uHVGg', $payload));
     }
 
     public function testSetKeyIsUsedToSignRequests(): void
@@ -473,19 +473,19 @@ class ClientTest extends TestCase
     public static function callbackProvider(): array
     {
         return [
-            '(string) valid signature and json' => ['6A54sGX71ohB9F4P05KYXBcQY2Bgob9o1WcGaCxcy1M=', '{"some":"data"}', true, null],
-            '(string) valid signature and invalid json' => ['HwwwBECb1dK56MWhIQ/pffeKXZqGEglK9wIs+4IYJ2M=', '{bad json}', true, 'Unexpected JSON value.'],
+            '(string) valid signature and json' => ['6A54sGX71ohB9F4P05KYXBcQY2Bgob9o1WcGaCxcy1M', '{"some":"data"}', true, null],
+            '(string) valid signature and invalid json' => ['HwwwBECb1dK56MWhIQ_pffeKXZqGEglK9wIs-4IYJ2M', '{bad json}', true, 'Unexpected JSON value.'],
             '(string) invalid signature' => ['flop', '{"some":"data"}', false, 'Callback request failed the security signature'],
 
-            '(stream) valid signature and json' => ['6A54sGX71ohB9F4P05KYXBcQY2Bgob9o1WcGaCxcy1M=', self::mockStream('{"some":"data"}', true), true, null],
-            '(stream) valid signature and invalid json' => ['HwwwBECb1dK56MWhIQ/pffeKXZqGEglK9wIs+4IYJ2M=', self::mockStream('{bad json}', true), true, 'Unexpected JSON value.'],
+            '(stream) valid signature and json' => ['6A54sGX71ohB9F4P05KYXBcQY2Bgob9o1WcGaCxcy1M', self::mockStream('{"some":"data"}', true), true, null],
+            '(stream) valid signature and invalid json' => ['HwwwBECb1dK56MWhIQ_pffeKXZqGEglK9wIs-4IYJ2M', self::mockStream('{bad json}', true), true, 'Unexpected JSON value.'],
             '(stream) invalid signature' => ['flop', self::mockStream('{"some":"data"}', true), false, 'Callback request failed the security signature'],
         ];
     }
 
     public function testIsValidCallbackFailsForTooLongPayloads(): void
     {
-        $signature = '6A54sGX71ohB9F4P05KYXBcQY2Bgob9o1WcGaCxcy1M=';
+        $signature = '6A54sGX71ohB9F4P05KYXBcQY2Bgob9o1WcGaCxcy1M';
         $payload = self::mockStream('{"some":"data"}', false);
 
         $client = new Client(self::$KEY);
@@ -497,7 +497,7 @@ class ClientTest extends TestCase
 
     public function testParseCallbackFailsForTooLongPayloads(): void
     {
-        $signature = '6A54sGX71ohB9F4P05KYXBcQY2Bgob9o1WcGaCxcy1M=';
+        $signature = '6A54sGX71ohB9F4P05KYXBcQY2Bgob9o1WcGaCxcy1M';
         $payload = self::mockStream('{"some":"data"}', false);
 
         $client = new Client(self::$KEY);
@@ -554,7 +554,7 @@ class ClientTest extends TestCase
     public function testIsValidRequestFailsForTooLongPayloads(): void
     {
         $payload = self::mockStream('{"some":"data"}', false);
-        $request = self::mockRequest(['signature' => ['6A54sGX71ohB9F4P05KYXBcQY2Bgob9o1WcGaCxcy1M=']], $payload);
+        $request = self::mockRequest(['signature' => ['6A54sGX71ohB9F4P05KYXBcQY2Bgob9o1WcGaCxcy1M']], $payload);
 
         $client = new Client(self::$KEY);
 
@@ -578,7 +578,7 @@ class ClientTest extends TestCase
     public function testIsValidRequestFailsForRequestsWithMultipleSignatures(): void
     {
         $payload = self::mockStream('{"some":"data"}', true);
-        $request = self::mockRequest(['signature' => ['6A54sGX71ohB9F4P05KYXBcQY2Bgob9o1WcGaCxcy1M=', '6A54sGX71ohB9F4P05KYXBcQY2Bgob9o1WcGaCxcy1M=']], $payload);
+        $request = self::mockRequest(['signature' => ['6A54sGX71ohB9F4P05KYXBcQY2Bgob9o1WcGaCxcy1M', '6A54sGX71ohB9F4P05KYXBcQY2Bgob9o1WcGaCxcy1M']], $payload);
 
         $client = new Client(self::$KEY);
 
@@ -590,7 +590,7 @@ class ClientTest extends TestCase
     public function testParseRequestFailsForTooLongPayloads(): void
     {
         $payload = self::mockStream('{"some":"data"}', false);
-        $request = self::mockRequest(['signature' => ['6A54sGX71ohB9F4P05KYXBcQY2Bgob9o1WcGaCxcy1M=']], $payload);
+        $request = self::mockRequest(['signature' => ['6A54sGX71ohB9F4P05KYXBcQY2Bgob9o1WcGaCxcy1M']], $payload);
 
         $client = new Client(self::$KEY);
 
@@ -618,7 +618,7 @@ class ClientTest extends TestCase
     public function testParseRequestFailsForRequestsWithMultipleSignatures(): void
     {
         $payload = self::mockStream('{"some":"data"}', true);
-        $request = self::mockRequest(['signature' => ['6A54sGX71ohB9F4P05KYXBcQY2Bgob9o1WcGaCxcy1M=', '6A54sGX71ohB9F4P05KYXBcQY2Bgob9o1WcGaCxcy1M=']], $payload);
+        $request = self::mockRequest(['signature' => ['6A54sGX71ohB9F4P05KYXBcQY2Bgob9o1WcGaCxcy1M', '6A54sGX71ohB9F4P05KYXBcQY2Bgob9o1WcGaCxcy1M']], $payload);
 
         $client = new Client(self::$KEY);
 

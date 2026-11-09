@@ -33,7 +33,7 @@ final class UtilsTest extends TestCase
     public function testSha256Hmac(): void
     {
         self::assertSame(
-            'iKqz7ejTrflNJquQ07r9SiCDBww7zOnAFO4EpEOEfAs=',
+            'iKqz7ejTrflNJquQ07r9SiCDBww7zOnAFO4EpEOEfAs',
             sha256Hmac('secret', 'hello')
         );
     }
