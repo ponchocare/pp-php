@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace PonchoPay;
 
 use Firebase\JWT\JWT;
