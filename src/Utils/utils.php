@@ -7,8 +7,6 @@ namespace PonchoPay\Utils;
 use Composer\InstalledVersions;
 use PonchoPay\PonchoPayException;
 
-define('PONCHOPAY_PACKAGE', 'ponchopay/pp-php');
-
 /**
  * Generates a simple SHA256 hash for a given string.
  *
@@ -124,10 +122,11 @@ function replaceParams(string $haystack, array $params): string
  */
 function telemetry(): array
 {
-    $version = InstalledVersions::getPrettyVersion(PONCHOPAY_PACKAGE);
+    $package = 'ponchopay/pp-php';
+    $version = InstalledVersions::getPrettyVersion($package);
 
     return [
-        'package' => ['vendor' => 'poncho', 'name' => PONCHOPAY_PACKAGE, 'version' => $version],
+        'package' => ['vendor' => 'poncho', 'name' => $package, 'version' => $version],
         'environment' => ['runtime' => 'php', 'arch' => php_uname('m'), 'platform' => PHP_OS, 'version' => phpversion()],
     ];
 }

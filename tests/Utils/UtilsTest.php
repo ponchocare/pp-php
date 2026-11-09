@@ -146,7 +146,7 @@ final class UtilsTest extends TestCase
         self::assertSame(
             [
                 'vendor' => 'poncho',
-                'name' => PONCHOPAY_PACKAGE,
+                'name' => 'ponchopay/pp-php',
             ],
             array_intersect_key($telemetry['package'], [
                 'vendor' => true,
