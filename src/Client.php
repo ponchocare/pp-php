@@ -17,6 +17,14 @@ use function PonchoPay\Utils\sha256Hmac;
  * Initializes a new instance of the Client. This sets up the core API connection
  * using the provided API key and determines the API client instance based on
  * whether an existing Api object or a base URL string is provided.
+ *
+ * @phpstan-import-type LocationStatus from Types
+ * @phpstan-import-type PaymentInit from Types
+ * @phpstan-import-type SubscriptionInit from Types
+ * @phpstan-import-type JWTPayload from Types
+ * @phpstan-import-type PaymentMethodRefund from Types
+ * @phpstan-import-type PaymentMethodUpdate from Types
+ * @phpstan-import-type PaymentWebhook from Types
  */
 final class Client
 {
@@ -48,14 +56,9 @@ final class Client
      * Validates the payment processing capabilities for a specified location URN.
      * This function is used to check which payment methods are available at a given location.
      *
-     * @param array{urn: string, email: string} $payload an associative array containing at the 'urn' (Unique Resource Name) and 'email' required for location identification
+     * @param JWTPayload $payload an associative array containing the 'urn' (Unique Resource Name) and 'email' required for location identification
      *
-     * @return object{
-     *   verification_status: bool,
-     *   card_payments_enabled: bool,
-     *   childcare_voucher_payments_enabled: bool,
-     *   tax_free_childcare_payments_enabled: bool
-     * } an object structure detailing payment enablement flags as boolean values
+     * @return LocationStatus an object structure detailing payment enablement flags as boolean values
      *
      * @throw TransportExceptionInterface if the underlying HTTP client fails to execute the request due to connectivity, timeouts, or server errors
      */
@@ -67,22 +70,7 @@ final class Client
     /**
      * Initiates the payment transaction process for a user.
      *
-     * @param array{
-     *    metadata: string,
-     *    urn: string,
-     *    amount: int,
-     *    email: string,
-     *    note?: string,
-     *    expiry?: \DateTimeInterface|string,
-     *    constraints?: array{
-     *        minimum_card_amount?: int
-     *    },
-     *    line_items?: array{
-     *        description: string,
-     *        amount: int,
-     *        quantity: int
-     *    }[]
-     * } $init a comprehensive associative array containing all necessary payment details:
+     * @param PaymentInit $init a comprehensive associative array containing all necessary payment details:
      *
      * @return string the redirect URL that the user's browser must navigate to in order to complete the payment
      *
@@ -96,22 +84,7 @@ final class Client
     /**
      * Initiates the process for setting up a recurring subscription payment.
      *
-     * @param array{
-     *    urn: string,
-     *    amount: int,
-     *    metadata: string,
-     *    note?: string,
-     *    email: string,
-     *    repetition: array{granularity: 'day', period: int}|array{granularity: 'month', period: int, day: int}|array{granularity: 'week', period: int, weekdays: string[]}|array{granularity: 'year', period: int},
-     *    ending?: array{condition: 'date', date: \DateTimeInterface|string}|array{condition: 'never'}|array{condition: 'occurrences', occurrences: int},
-     *    additional_one_time_payment?: array{
-     *        metadata: string,
-     *        amount: int,
-     *        note?: string,
-     *        expiry?: \DateTimeInterface|string,
-     *        constraints?: array{minimum_card_amount?: int}
-     *    }
-     * } $init a comprehensive array containing all necessary details for defining the subscription:
+     * @param SubscriptionInit $init a comprehensive array containing all necessary details for defining the subscription:
      *
      * @return string the redirect URL that the user's browser must navigate to in order to setup the subscription
      *
@@ -125,14 +98,8 @@ final class Client
     /**
      * Updates specific details for an existing payment method associated with a payment record.
      *
-     * @param string $paymentMethodId the identifier of the payment method to be modified
-     * @param array{
-     *    urn: string,
-     *    email: string,
-     *    type: 'card'|'childcare-voucher'|'tax-free-childcare',
-     *    amount: int,
-     *    voucher_provider?: string
-     * } $update an associative array containing the updated payment details
+     * @param string              $paymentMethodId the identifier of the payment method to be modified
+     * @param PaymentMethodUpdate $update          an associative array containing the updated payment details
      *
      * @throw TransportExceptionInterface if the underlying HTTP client fails to execute the request due to connectivity, timeouts, or server errors
      */
@@ -145,8 +112,8 @@ final class Client
     /**
      * Refunds a single payment method within a payment.
      *
-     * @param string                                         $paymentMethodId the identifier of the payment method to be refunded
-     * @param array{urn: string, email: string, amount: int} $refund          the refund payload
+     * @param string              $paymentMethodId the identifier of the payment method to be refunded
+     * @param PaymentMethodRefund $refund          the refund payload
      */
     public function refundPaymentMethod(string $paymentMethodId, array $refund): void
     {
@@ -157,8 +124,8 @@ final class Client
     /**
      * Requests the cancelation of a payment.
      *
-     * @param string                            $paymentId the identifier of the payment method to be cancelled
-     * @param array{urn: string, email: string} $payload   the cancellation payload
+     * @param string     $paymentId the identifier of the payment method to be cancelled
+     * @param JWTPayload $payload   the cancellation payload
      */
     public function cancelPayment(string $paymentId, array $payload): void
     {
@@ -169,8 +136,8 @@ final class Client
     /**
      * Requests the cancelation of a recursion.
      *
-     * @param string                            $recursionId the unique identifier of the recursion to be cancelled
-     * @param array{urn: string, email: string} $payload     the cancellation payload
+     * @param string     $recursionId the unique identifier of the recursion to be cancelled
+     * @param JWTPayload $payload     the cancellation payload
      */
     public function cancelRecursion(string $recursionId, array $payload): void
     {
@@ -215,7 +182,7 @@ final class Client
      * @param StreamInterface|string $payload   The body content of the incoming callback request. This can be a `StreamInterface`
      *                                          object or a raw string.
      *
-     * @return object the fully parsed and validated payload object from the callback
+     * @return PaymentWebhook the fully parsed and validated payload object from the callback
      *
      * @throw PonchoPayException if the signature does not match, the body is not valid JSON, or any other processing error occurs.
      */
@@ -235,7 +202,7 @@ final class Client
      *
      * @param RequestInterface $request the incoming PSR-7 request object
      *
-     * @return object the fully parsed and validated payload object from the request
+     * @return PaymentWebhook the fully parsed and validated payload object from the request
      *
      * @throw PonchoPayException if the signature header is missing or if the body content is invalid.
      */
@@ -297,8 +264,8 @@ final class Client
     /**
      * It consumes endpoints returning redirection URLs. This method extracts the returned redirection.
      *
-     * @param string           $url  the API endpoint URL to initiate the redirect process
-     * @param array<int,mixed> $data the array of initial payment data to be sent
+     * @param string                 $url  the API endpoint URL to initiate the redirect process
+     * @param array<array-key,mixed> $data the array of initial payment data to be sent
      *
      * @return string the final redirect URL obtained from the API response headers
      *
@@ -350,8 +317,8 @@ final class Client
     /**
      * Executes an HTTP PUT request to the API to modify or update a payment record.
      *
-     * @param string              $url  the API endpoint URL to initiate the redirect process
-     * @param array<string,mixed> $data the data for the location, the authorising email, and the endpoint payload
+     * @param string                 $url  the API endpoint URL to initiate the redirect process
+     * @param array<array-key,mixed> $data the data for the location, the authorising email, and the endpoint payload
      *
      * @throws PonchoPayException          if the API response status code is not 204 No Content or if the request fails
      * @throws TransportExceptionInterface if the underlying HTTP client fails to execute the request due to connectivity, timeouts, or server errors
