@@ -26,7 +26,7 @@ use function PonchoPay\Utils\sha256Hmac;
  * @phpstan-import-type PaymentMethodUpdate from Types
  * @phpstan-import-type PaymentWebhook from Types
  */
-final class Client
+final class Client implements ClientInterface
 {
     private Api $api;
     private string $key;

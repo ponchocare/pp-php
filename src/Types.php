@@ -15,11 +15,11 @@ namespace PonchoPay;
  *   constraints?: array{
  *     minimum_card_amount?: int
  *   },
- *   line_items?: array{
+ *   line_items?: list<array{
  *     description: string,
  *     amount: int,
  *     quantity: int
- *   }[]
+ *   }>
  * }
  * @phpstan-type SubscriptionInit array{
  *   urn: string,
