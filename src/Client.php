@@ -28,8 +28,8 @@ use function PonchoPay\Utils\sha256Hmac;
  */
 final class Client implements ClientInterface
 {
-    private Api $api;
-    private string $key;
+    private readonly Api $api;
+    private readonly string $key;
 
     /**
      * @param string     $key  the integration key found in the https://pay.ponchopay.com/provider/admin/settings/api-integration page
@@ -39,16 +39,6 @@ final class Client implements ClientInterface
     public function __construct(string $key, Api|string $base = 'https://pay.ponchopay.com/')
     {
         $this->api = $base instanceof Api ? $base : new Api($base);
-        $this->key = $key;
-    }
-
-    /**
-     * Updates the integration key used to sign requests and verify callbacks.
-     *
-     * @param string $key the integration key found in the https://pay.ponchopay.com/provider/admin/settings/api-integration page
-     */
-    public function setKey(string $key): void
-    {
         $this->key = $key;
     }
 
