@@ -12,7 +12,7 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
 /**
  * @internal
  *
- * @coversNothing
+ * @covers \PonchoPay\Api
  */
 class ApiTest extends TestCase
 {
