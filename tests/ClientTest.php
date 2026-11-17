@@ -448,6 +448,26 @@ class ClientTest extends TestCase
         ];
     }
 
+    public function testIsValidCallbackAcceptsShortReadsUnderLimit(): void
+    {
+        $signature = '6A54sGX71ohB9F4P05KYXBcQY2Bgob9o1WcGaCxcy1M';
+        $payload = self::mockChunkedStream(['{"some":', '"data"}']);
+
+        $client = new Client(self::$KEY);
+
+        $this->assertTrue($client->isValidCallback($signature, $payload));
+    }
+
+    public function testParseCallbackAcceptsShortReadsUnderLimit(): void
+    {
+        $signature = '6A54sGX71ohB9F4P05KYXBcQY2Bgob9o1WcGaCxcy1M';
+        $payload = self::mockChunkedStream(['{"some":', '"data"}']);
+
+        $client = new Client(self::$KEY);
+
+        $this->assertEquals((object) ['some' => 'data'], $client->parseCallback($signature, $payload));
+    }
+
     public function testIsValidCallbackFailsForTooLongPayloads(): void
     {
         $signature = '6A54sGX71ohB9F4P05KYXBcQY2Bgob9o1WcGaCxcy1M';
@@ -608,8 +628,43 @@ class ClientTest extends TestCase
     private static function mockStream(string $data, bool $finished): StreamInterface
     {
         $stream = self::createStub(StreamInterface::class);
-        $stream->method('read')->with(self::isInt())->willReturn($data);
-        $stream->method('eof')->willReturn($finished);
+        $read = false;
+        $stream->method('read')->with(self::isInt())->willReturnCallback(
+            static function (int $length) use ($data, $finished, &$read): string {
+                if ($read) {
+                    return $finished ? '' : str_repeat('x', $length);
+                }
+                $read = true;
+
+                return $finished ? $data : str_repeat('x', $length);
+            },
+        );
+        $stream->method('eof')->willReturnCallback(
+            static function () use ($finished, &$read): bool {
+                return $finished && $read;
+            },
+        );
+        $stream->method('isSeekable')->willReturn(false);
+
+        return $stream;
+    }
+
+    /**
+     * @param list<string> $chunks
+     */
+    private static function mockChunkedStream(array $chunks): StreamInterface
+    {
+        $stream = self::createStub(StreamInterface::class);
+        $index = 0;
+        $stream->method('read')->willReturnCallback(static function () use (&$index, $chunks): string {
+            $chunk = $chunks[$index] ?? '';
+            ++$index;
+
+            return $chunk;
+        });
+        $stream->method('eof')->willReturnCallback(static function () use (&$index, $chunks): bool {
+            return $index >= count($chunks);
+        });
         $stream->method('isSeekable')->willReturn(false);
 
         return $stream;

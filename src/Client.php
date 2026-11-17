@@ -236,8 +236,20 @@ final class Client implements ClientInterface
     private function getRawData(StreamInterface|string $payload): string
     {
         if ($payload instanceof StreamInterface) {
-            $data = $payload->read(Binary::fromMebibytes(2)->toBytes()); // 2 MiB should be enough for standard PonchoPay interactions
-            if (!$payload->eof()) {
+            // 2 MiB should be enough for standard PonchoPay interactions.
+            // read() may return fewer bytes than requested without reaching EOF.
+            $limit = Binary::fromMebibytes(2)->toBytes();
+            $data = '';
+
+            while (!$payload->eof() && strlen($data) <= $limit) {
+                $chunk = $payload->read($limit + 1 - strlen($data));
+                if ('' === $chunk) {
+                    break;
+                }
+                $data .= $chunk;
+            }
+
+            if (strlen($data) > $limit) {
                 throw new PonchoPayException('Stream too long. Expected a maximum of 2 MiB');
             }
 
