@@ -18,7 +18,7 @@ $client->parseRequest($request);
 Declaration:
 
 ```php
-$client->parseRequest(RequestInterface $request): bool;
+$client->parseRequest(RequestInterface $request): object;
 ```
 
 Parameters:

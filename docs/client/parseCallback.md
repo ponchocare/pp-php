@@ -18,7 +18,7 @@ $client->parseCallback($signature, $payload);
 Declaration:
 
 ```php
-$client->parseCallback(string $signature, StreamInterface|string $payload): bool;
+$client->parseCallback(string $signature, StreamInterface|string $payload): object;
 ```
 
 Parameters:
