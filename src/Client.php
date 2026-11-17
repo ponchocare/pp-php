@@ -148,7 +148,7 @@ final class Client implements ClientInterface
     {
         $data = $this->getRawData($payload);
 
-        return $signature === sha256Hmac($this->key, $data);
+        return hash_equals($signature, sha256Hmac($this->key, $data));
     }
 
     /**
