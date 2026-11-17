@@ -18,7 +18,7 @@ use function PonchoPay\Utils\serialise;
 /**
  * @internal
  *
- * @coversNothing
+ * @covers \PonchoPay\\Client
  */
 class ClientTest extends TestCase
 {

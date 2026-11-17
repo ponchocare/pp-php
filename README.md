@@ -26,7 +26,7 @@ And the `Client` class which provides the following methods:
 - [cancelRecursion](https://github.com/ponchocare/pp-php/blob/master/docs/client/cancelRecursion.md): This method allows to cancel a Recurring Payment.
 - [isValidCallback](https://github.com/ponchocare/pp-php/blob/master/docs/client/isValidCallback.md): This method allows to validate a callback received from PonchoPay.
 - [isValidRequest](https://github.com/ponchocare/pp-php/blob/master/docs/client/isValidRequest.md): This method allows to validate a request received from PonchoPay.
-- [parsedCallback](https://github.com/ponchocare/pp-php/blob/master/docs/client/parseCallback.md): This method allows to parse a callback received from PonchoPay.
+- [parseCallback](https://github.com/ponchocare/pp-php/blob/master/docs/client/parseCallback.md): This method allows to parse a callback received from PonchoPay.
 - [parseRequest](https://github.com/ponchocare/pp-php/blob/master/docs/client/parseRequest.md): This method allows to parse a request received from PonchoPay.
 
 ## Development
