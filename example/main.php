@@ -38,7 +38,7 @@ $metadata = json_encode(['order' => rand(1, 1000)]);
 $client = new Client($key, $base);
 
 /**
- * Let's validate the location first
+ * Let's validate the location first.
  */
 $validation = $client->validateLocationUrn(['urn' => $urn, 'email' => 'validate@author.com']);
 
@@ -64,7 +64,7 @@ $payment = $client->initiatePayment([
     'email' => $email,
     'line_items' => [
         ['description' => 'Item 1', 'amount' => 2034, 'quantity' => 1],
-    ]
+    ],
 ]);
 
 echo "\n";

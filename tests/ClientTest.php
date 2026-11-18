@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace PonchoPay\Test;
 
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -7,6 +9,8 @@ use PHPUnit\Framework\TestCase;
 use PonchoPay\Api;
 use PonchoPay\Client;
 use PonchoPay\PonchoPayException;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\StreamInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 use function PonchoPay\Utils\serialise;
@@ -14,7 +18,7 @@ use function PonchoPay\Utils\serialise;
 /**
  * @internal
  *
- * @covers \PonchoPay\Client
+ * @covers \PonchoPay\\Client
  */
 class ClientTest extends TestCase
 {
@@ -43,8 +47,7 @@ class ClientTest extends TestCase
             }),
         )->willReturn($response);
 
-        $client = new Client(self::$KEY);
-        (fn () => $this->api = $api)->call($client);
+        $client = new Client(self::$KEY, $api);
 
         $response = $client->validateLocationUrn(['urn' => self::$URN, 'email' => self::$EMAIL]);
         $this->assertIsObject($response);
@@ -65,8 +68,7 @@ class ClientTest extends TestCase
         )->willReturn($response);
         $api->expects($this->never())->method('makePutRequest');
 
-        $client = new Client(self::$KEY);
-        (fn () => $this->api = $api)->call($client);
+        $client = new Client(self::$KEY, $api);
 
         $location = $client->initiatePayment($init);
         $this->assertEquals(self::$LOCATION, $location);
@@ -88,7 +90,7 @@ class ClientTest extends TestCase
             'with a minimum card amount' => [[...$defaults, 'constraints' => ['minimum_card_amount' => 56]]],
             'with line items' => [[...$defaults, 'line_items' => [
                 ['description' => 'item 1', 'amount' => 1000, 'quantity' => 1],
-                ['description' => 'item 2', 'amount' => 234, 'quantity'  => 1],
+                ['description' => 'item 2', 'amount' => 234, 'quantity' => 1],
             ]]],
         ];
     }
@@ -108,10 +110,10 @@ class ClientTest extends TestCase
         )->willReturn($response);
         $api->expects($this->never())->method('makePutRequest');
 
-        $client = new Client(self::$KEY);
-        (fn () => $this->api = $api)->call($client);
+        $client = new Client(self::$KEY, $api);
 
         $this->expectException(PonchoPayException::class);
+        $this->expectExceptionMessage('Unexpected response. Expected 302 as status code but 200 was received');
         $client->initiatePayment($init);
     }
 
@@ -130,8 +132,7 @@ class ClientTest extends TestCase
         )->willReturn($response);
         $api->expects($this->never())->method('makePutRequest');
 
-        $client = new Client(self::$KEY);
-        (fn () => $this->api = $api)->call($client);
+        $client = new Client(self::$KEY, $api);
 
         $location = $client->initiateSubscription($init);
         $this->assertEquals(self::$LOCATION, $location);
@@ -187,10 +188,10 @@ class ClientTest extends TestCase
         )->willReturn($response);
         $api->expects($this->never())->method('makePutRequest');
 
-        $client = new Client(self::$KEY);
-        (fn () => $this->api = $api)->call($client);
+        $client = new Client(self::$KEY, $api);
 
         $this->expectException(PonchoPayException::class);
+        $this->expectExceptionMessage('Unexpected response. Expected 302 as status code but 200 was received');
         $client->initiateSubscription($init);
     }
 
@@ -214,8 +215,7 @@ class ClientTest extends TestCase
             serialise($update)
         )->willReturn($response);
 
-        $client = new Client(self::$KEY);
-        (fn () => $this->api = $api)->call($client);
+        $client = new Client(self::$KEY, $api);
 
         $client->updatePaymentMethod('cb35f971', [...$update, 'urn' => self::$URN, 'email' => self::$EMAIL]);
     }
@@ -249,10 +249,10 @@ class ClientTest extends TestCase
             serialise($update)
         )->willReturn($response);
 
-        $client = new Client(self::$KEY);
-        (fn () => $this->api = $api)->call($client);
+        $client = new Client(self::$KEY, $api);
 
         $this->expectException(PonchoPayException::class);
+        $this->expectExceptionMessage('Unexpected response. Expected 204 as status code but 200 was received');
         $client->updatePaymentMethod('cb35f971', [...$update, 'urn' => self::$URN, 'email' => self::$EMAIL]);
     }
 
@@ -277,8 +277,7 @@ class ClientTest extends TestCase
             serialise($refund)
         )->willReturn($response);
 
-        $client = new Client(self::$KEY);
-        (fn () => $this->api = $api)->call($client);
+        $client = new Client(self::$KEY, $api);
 
         $client->refundPaymentMethod('cb35f971', [...$refund, 'urn' => self::$URN, 'email' => self::$EMAIL]);
     }
@@ -304,10 +303,10 @@ class ClientTest extends TestCase
             serialise($refund)
         )->willReturn($response);
 
-        $client = new Client(self::$KEY);
-        (fn () => $this->api = $api)->call($client);
+        $client = new Client(self::$KEY, $api);
 
         $this->expectException(PonchoPayException::class);
+        $this->expectExceptionMessage('Unexpected response. Expected 204 as status code but 200 was received');
         $client->refundPaymentMethod('cb35f971', [...$refund, 'urn' => self::$URN, 'email' => self::$EMAIL]);
     }
 
@@ -330,8 +329,7 @@ class ClientTest extends TestCase
             serialise([])
         )->willReturn($response);
 
-        $client = new Client(self::$KEY);
-        (fn () => $this->api = $api)->call($client);
+        $client = new Client(self::$KEY, $api);
 
         $client->cancelPayment('cb35f971', ['urn' => self::$URN, 'email' => self::$EMAIL]);
     }
@@ -355,10 +353,10 @@ class ClientTest extends TestCase
             serialise([])
         )->willReturn($response);
 
-        $client = new Client(self::$KEY);
-        (fn () => $this->api = $api)->call($client);
+        $client = new Client(self::$KEY, $api);
 
         $this->expectException(PonchoPayException::class);
+        $this->expectExceptionMessage('Unexpected response. Expected 204 as status code but 200 was received');
         $client->cancelPayment('cb35f971', ['urn' => self::$URN, 'email' => self::$EMAIL]);
     }
 
@@ -381,8 +379,7 @@ class ClientTest extends TestCase
             serialise([])
         )->willReturn($response);
 
-        $client = new Client(self::$KEY);
-        (fn () => $this->api = $api)->call($client);
+        $client = new Client(self::$KEY, $api);
 
         $client->cancelRecursion('kgvkrglq', ['urn' => self::$URN, 'email' => self::$EMAIL]);
     }
@@ -406,10 +403,270 @@ class ClientTest extends TestCase
             serialise([])
         )->willReturn($response);
 
-        $client = new Client(self::$KEY);
-        (fn () => $this->api = $api)->call($client);
+        $client = new Client(self::$KEY, $api);
 
         $this->expectException(PonchoPayException::class);
+        $this->expectExceptionMessage('Unexpected response. Expected 204 as status code but 200 was received');
         $client->cancelRecursion('kgvkrglq', ['urn' => self::$URN, 'email' => self::$EMAIL]);
+    }
+
+    #[DataProvider('callbackProvider')]
+    public function testIsValidCallback($signature, $payload, $valid, $_): void
+    {
+        $client = new Client(self::$KEY);
+        $this->assertEquals($valid, $client->isValidCallback($signature, $payload));
+    }
+
+    #[DataProvider('callbackProvider')]
+    public function testParseCallback($signature, $payload, $_, $error): void
+    {
+        $client = new Client(self::$KEY);
+
+        if ($error) {
+            $this->expectException(PonchoPayException::class);
+            $this->expectExceptionMessage($error);
+        }
+
+        $result = $client->parseCallback($signature, $payload);
+        if ($error) {
+            $this->fail('An error was expected');
+        } else {
+            $this->assertEquals((object) ['some' => 'data'], $result);
+        }
+    }
+
+    public static function callbackProvider(): array
+    {
+        return [
+            '(string) valid signature and json' => ['6A54sGX71ohB9F4P05KYXBcQY2Bgob9o1WcGaCxcy1M', '{"some":"data"}', true, null],
+            '(string) valid signature and invalid json' => ['HwwwBECb1dK56MWhIQ_pffeKXZqGEglK9wIs-4IYJ2M', '{bad json}', true, 'Unexpected JSON value.'],
+            '(string) invalid signature' => ['flop', '{"some":"data"}', false, 'Callback request failed the security signature'],
+
+            '(stream) valid signature and json' => ['6A54sGX71ohB9F4P05KYXBcQY2Bgob9o1WcGaCxcy1M', self::mockStream('{"some":"data"}', true), true, null],
+            '(stream) valid signature and invalid json' => ['HwwwBECb1dK56MWhIQ_pffeKXZqGEglK9wIs-4IYJ2M', self::mockStream('{bad json}', true), true, 'Unexpected JSON value.'],
+            '(stream) invalid signature' => ['flop', self::mockStream('{"some":"data"}', true), false, 'Callback request failed the security signature'],
+        ];
+    }
+
+    public function testIsValidCallbackAcceptsShortReadsUnderLimit(): void
+    {
+        $signature = '6A54sGX71ohB9F4P05KYXBcQY2Bgob9o1WcGaCxcy1M';
+        $payload = self::mockChunkedStream(['{"some":', '"data"}']);
+
+        $client = new Client(self::$KEY);
+
+        $this->assertTrue($client->isValidCallback($signature, $payload));
+    }
+
+    public function testParseCallbackAcceptsShortReadsUnderLimit(): void
+    {
+        $signature = '6A54sGX71ohB9F4P05KYXBcQY2Bgob9o1WcGaCxcy1M';
+        $payload = self::mockChunkedStream(['{"some":', '"data"}']);
+
+        $client = new Client(self::$KEY);
+
+        $this->assertEquals((object) ['some' => 'data'], $client->parseCallback($signature, $payload));
+    }
+
+    public function testIsValidCallbackFailsForTooLongPayloads(): void
+    {
+        $signature = '6A54sGX71ohB9F4P05KYXBcQY2Bgob9o1WcGaCxcy1M';
+        $payload = self::mockStream('{"some":"data"}', false);
+
+        $client = new Client(self::$KEY);
+
+        $this->expectException(PonchoPayException::class);
+        $this->expectExceptionMessage('Stream too long. Expected a maximum of 2 MiB');
+        $client->isValidCallback($signature, $payload);
+    }
+
+    public function testParseCallbackFailsForTooLongPayloads(): void
+    {
+        $signature = '6A54sGX71ohB9F4P05KYXBcQY2Bgob9o1WcGaCxcy1M';
+        $payload = self::mockStream('{"some":"data"}', false);
+
+        $client = new Client(self::$KEY);
+
+        $this->expectException(PonchoPayException::class);
+        $this->expectExceptionMessage('Stream too long. Expected a maximum of 2 MiB');
+
+        $client->parseCallback($signature, $payload);
+        $this->fail('An error was expected');
+    }
+
+    #[DataProvider('requestProvider')]
+    public function testIsValidRequest($request, $valid, $_): void
+    {
+        $client = new Client(self::$KEY);
+        $this->assertEquals($valid, $client->isValidRequest($request));
+    }
+
+    #[DataProvider('requestProvider')]
+    public function testParseRequest($request, $_, $error): void
+    {
+        $client = new Client(self::$KEY);
+
+        if ($error) {
+            $this->expectException(PonchoPayException::class);
+            $this->expectExceptionMessage($error);
+        }
+
+        $result = $client->parseRequest($request);
+        if ($error) {
+            $this->fail('An error was expected');
+        } else {
+            $this->assertEquals((object) ['some' => 'data'], $result);
+        }
+    }
+
+    public static function requestProvider(): array
+    {
+        // Remove the `(string)` scenarios and compose a request from the others' variables
+        return array_map(
+            static function ($scenario) {
+                [$signature, $payload, $valid, $error] = $scenario;
+
+                return [self::mockRequest(['signature' => [$signature]], $payload), $valid, $error];
+            },
+            array_filter(
+                self::callbackProvider(),
+                static fn ($key) => !str_starts_with($key, '(string)'),
+                ARRAY_FILTER_USE_KEY,
+            )
+        );
+    }
+
+    public function testIsValidRequestFailsForTooLongPayloads(): void
+    {
+        $payload = self::mockStream('{"some":"data"}', false);
+        $request = self::mockRequest(['signature' => ['6A54sGX71ohB9F4P05KYXBcQY2Bgob9o1WcGaCxcy1M']], $payload);
+
+        $client = new Client(self::$KEY);
+
+        $this->expectException(PonchoPayException::class);
+        $this->expectExceptionMessage('Stream too long. Expected a maximum of 2 MiB');
+        $client->isValidRequest($request);
+    }
+
+    public function testIsValidRequestFailsForRequestsWithoutSignature(): void
+    {
+        $payload = self::mockStream('{"some":"data"}', true);
+        $request = self::mockRequest([], $payload);
+
+        $client = new Client(self::$KEY);
+
+        $this->expectException(PonchoPayException::class);
+        $this->expectExceptionMessage('Signature header not found');
+        $client->isValidRequest($request);
+    }
+
+    public function testIsValidRequestFailsForRequestsWithMultipleSignatures(): void
+    {
+        $payload = self::mockStream('{"some":"data"}', true);
+        $request = self::mockRequest(['signature' => ['6A54sGX71ohB9F4P05KYXBcQY2Bgob9o1WcGaCxcy1M', '6A54sGX71ohB9F4P05KYXBcQY2Bgob9o1WcGaCxcy1M']], $payload);
+
+        $client = new Client(self::$KEY);
+
+        $this->expectException(PonchoPayException::class);
+        $this->expectExceptionMessage('Multiple signature headers found');
+        $client->isValidRequest($request);
+    }
+
+    public function testParseRequestFailsForTooLongPayloads(): void
+    {
+        $payload = self::mockStream('{"some":"data"}', false);
+        $request = self::mockRequest(['signature' => ['6A54sGX71ohB9F4P05KYXBcQY2Bgob9o1WcGaCxcy1M']], $payload);
+
+        $client = new Client(self::$KEY);
+
+        $this->expectException(PonchoPayException::class);
+        $this->expectExceptionMessage('Stream too long. Expected a maximum of 2 MiB');
+
+        $client->parseRequest($request);
+        $this->fail('An error was expected');
+    }
+
+    public function testParseRequestFailsForRequestsWithoutSignature(): void
+    {
+        $payload = self::mockStream('{"some":"data"}', true);
+        $request = self::mockRequest([], $payload);
+
+        $client = new Client(self::$KEY);
+
+        $this->expectException(PonchoPayException::class);
+        $this->expectExceptionMessage('Signature header not found');
+
+        $client->parseRequest($request);
+        $this->fail('An error was expected');
+    }
+
+    public function testParseRequestFailsForRequestsWithMultipleSignatures(): void
+    {
+        $payload = self::mockStream('{"some":"data"}', true);
+        $request = self::mockRequest(['signature' => ['6A54sGX71ohB9F4P05KYXBcQY2Bgob9o1WcGaCxcy1M', '6A54sGX71ohB9F4P05KYXBcQY2Bgob9o1WcGaCxcy1M']], $payload);
+
+        $client = new Client(self::$KEY);
+
+        $this->expectException(PonchoPayException::class);
+        $this->expectExceptionMessage('Multiple signature headers found');
+
+        $client->parseRequest($request);
+        $this->fail('An error was expected');
+    }
+
+    private static function mockRequest(array $headers, StreamInterface $body): RequestInterface
+    {
+        $request = self::createStub(RequestInterface::class);
+        $request->method('getBody')->willReturn($body);
+        foreach ($headers as $header => $value) {
+            $request->method('getHeader')->with($header)->willReturn($value);
+        }
+
+        return $request;
+    }
+
+    private static function mockStream(string $data, bool $finished): StreamInterface
+    {
+        $stream = self::createStub(StreamInterface::class);
+        $read = false;
+        $stream->method('read')->with(self::isInt())->willReturnCallback(
+            static function (int $length) use ($data, $finished, &$read): string {
+                if ($read) {
+                    return $finished ? '' : str_repeat('x', $length);
+                }
+                $read = true;
+
+                return $finished ? $data : str_repeat('x', $length);
+            },
+        );
+        $stream->method('eof')->willReturnCallback(
+            static function () use ($finished, &$read): bool {
+                return $finished && $read;
+            },
+        );
+        $stream->method('isSeekable')->willReturn(false);
+
+        return $stream;
+    }
+
+    /**
+     * @param list<string> $chunks
+     */
+    private static function mockChunkedStream(array $chunks): StreamInterface
+    {
+        $stream = self::createStub(StreamInterface::class);
+        $index = 0;
+        $stream->method('read')->willReturnCallback(static function () use (&$index, $chunks): string {
+            $chunk = $chunks[$index] ?? '';
+            ++$index;
+
+            return $chunk;
+        });
+        $stream->method('eof')->willReturnCallback(static function () use (&$index, $chunks): bool {
+            return $index >= count($chunks);
+        });
+        $stream->method('isSeekable')->willReturn(false);
+
+        return $stream;
     }
 }
