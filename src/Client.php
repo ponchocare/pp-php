@@ -82,7 +82,7 @@ final class Client implements ClientInterface
      */
     public function initiateSubscription(array $init): string
     {
-        return $this->getRedirectLocation('/api/integration/generic/subscription', $init);
+        return $this->getRedirectLocation('/api/integration/generic/subscription/redirect', $init);
     }
 
     /**

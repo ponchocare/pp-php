@@ -6,7 +6,7 @@ use PhpCsFixer\Config;
 use PhpCsFixer\Finder;
 use PhpCsFixer\Runner\Parallel\ParallelConfigFactory;
 
-return new Config()
+return (new Config())
     ->setParallelConfig(ParallelConfigFactory::detect()) // @TODO 4.0 no need to call this manually
     ->setRiskyAllowed(false)
     ->setRules([
@@ -16,7 +16,7 @@ return new Config()
     ])
     // 💡 by default, Fixer looks for `*.php` files excluding `./vendor/` - here, you can groom this config
     ->setFinder(
-        new Finder()
+        (new Finder())
             // 💡 root folder to check
             ->in(__DIR__)
         // 💡 additional files, eg bin entry file

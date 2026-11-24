@@ -126,7 +126,7 @@ class ClientTest extends TestCase
 
         $api = $this->createMock(Api::class);
         $api->expects($this->once())->method('makePostRequest')->with(
-            '/api/integration/generic/subscription',
+            '/api/integration/generic/subscription/redirect',
             [],
             serialise([...$init, 'token' => 'Axii0jwfzrkfh57WttOCi3qi+icnUC2dFKtre3b4pM4='])
         )->willReturn($response);
@@ -182,7 +182,7 @@ class ClientTest extends TestCase
 
         $api = $this->createMock(Api::class);
         $api->expects($this->once())->method('makePostRequest')->with(
-            '/api/integration/generic/subscription',
+            '/api/integration/generic/subscription/redirect',
             [],
             serialise([...$init, 'token' => 'Axii0jwfzrkfh57WttOCi3qi+icnUC2dFKtre3b4pM4='])
         )->willReturn($response);
