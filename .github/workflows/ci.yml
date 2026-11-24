@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+
+jobs:
+  checks:
+    name: checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer
+          coverage: none
+
+      - name: Install dependencies
+        run: composer update --no-interaction --no-progress --prefer-dist
+
+      - name: Check code style
+        run: vendor/bin/php-cs-fixer check src/
+
+      - name: Run tests
+        run: vendor/bin/phpunit tests/
