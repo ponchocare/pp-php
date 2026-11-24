@@ -264,6 +264,26 @@ final class Client implements ClientInterface
     }
 
     /**
+     * Converts a payload value into the string required for signing.
+     * Scalars and Stringable objects are accepted to preserve the coercion the library has historically applied.
+     *
+     * @param mixed  $value the payload value to convert
+     * @param string $field the payload field name, used in the error message
+     *
+     * @return string the value as a string
+     *
+     * @throws PonchoPayException if the value cannot be represented as a string
+     */
+    private function toString(mixed $value, string $field): string
+    {
+        if (\is_scalar($value) || $value instanceof \Stringable) {
+            return (string) $value;
+        }
+
+        throw new PonchoPayException("Invalid '{$field}' value. Expected a string.");
+    }
+
+    /**
      * It consumes endpoints returning redirection URLs. This method extracts the returned redirection.
      *
      * @param string                 $url  the API endpoint URL to initiate the redirect process
@@ -277,7 +297,7 @@ final class Client implements ClientInterface
     {
         $body = serialise([
             ...$data,
-            'token' => createToken($this->key, $data['metadata']),
+            'token' => createToken($this->key, $this->toString($data['metadata'], 'metadata')),
         ]);
 
         $response = $this->api->makePostRequest($url, [], $body);
@@ -301,8 +321,8 @@ final class Client implements ClientInterface
      */
     private function issueGetRequest(string $url, array $data): object
     {
-        $urn = $data['urn'];
-        $email = $data['email'];
+        $urn = $this->toString($data['urn'], 'urn');
+        $email = $this->toString($data['email'], 'email');
 
         $jwt = createJWT($urn, $this->key, $email, '');
 
@@ -327,8 +347,8 @@ final class Client implements ClientInterface
      */
     private function issuePutRequest(string $url, array $data): void
     {
-        $urn = $data['urn'];
-        $email = $data['email'];
+        $urn = $this->toString($data['urn'], 'urn');
+        $email = $this->toString($data['email'], 'email');
 
         $body = serialise(array_diff_key($data, ['urn' => $urn, 'email' => $email]));
         $jwt = createJWT($urn, $this->key, $email, $body);

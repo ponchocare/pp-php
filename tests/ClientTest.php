@@ -13,6 +13,7 @@ use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\StreamInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
+use function PonchoPay\createToken;
 use function PonchoPay\Utils\serialise;
 
 /**
@@ -93,6 +94,41 @@ class ClientTest extends TestCase
                 ['description' => 'item 2', 'amount' => 234, 'quantity' => 1],
             ]]],
         ];
+    }
+
+    public function testInitiatePaymentAcceptsNonStringMetadata(): void
+    {
+        $init = ['metadata' => 1234, 'urn' => self::$URN, 'amount' => 1234, 'email' => self::$EMAIL];
+
+        $response = $this->createStub(ResponseInterface::class);
+        $response->method('getStatusCode')->willReturn(302);
+        $response->method('getHeaders')->with(false)->willReturn(['location' => [self::$LOCATION]]);
+
+        $api = $this->createMock(Api::class);
+        $api->expects($this->once())->method('makePostRequest')->with(
+            '/api/integration/generic/initiate',
+            [],
+            serialise([...$init, 'token' => createToken(self::$KEY, '1234')])
+        )->willReturn($response);
+
+        $client = new Client(self::$KEY, $api);
+
+        $location = $client->initiatePayment($init);
+        $this->assertEquals(self::$LOCATION, $location);
+    }
+
+    public function testInitiatePaymentFailsForInvalidMetadata(): void
+    {
+        $init = ['metadata' => null, 'urn' => self::$URN, 'amount' => 1234, 'email' => self::$EMAIL];
+
+        $api = $this->createMock(Api::class);
+        $api->expects($this->never())->method('makePostRequest');
+
+        $client = new Client(self::$KEY, $api);
+
+        $this->expectException(PonchoPayException::class);
+        $this->expectExceptionMessage("Invalid 'metadata' value. Expected a string.");
+        $client->initiatePayment($init);
     }
 
     public function testInitiatePaymentFailsToResolveALocation(): void
