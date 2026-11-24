@@ -20,7 +20,7 @@
   ],
   "require": {
     "php": "^8.2",
-    "symfony/http-client": "^7.4",
+    "symfony/http-client": "^7.4 || ^8.0",
     "firebase/php-jwt": "^7.0",
     "psr/http-message": "^2.0"
   },
