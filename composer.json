@@ -28,10 +28,5 @@
     "friendsofphp/php-cs-fixer": "^3.90",
     "phpunit/phpunit": "^11.0",
     "phpstan/phpstan": "^2.3"
-  },
-  "extra": {
-    "branch-alias": {
-      "dev-main": "1.6.x-dev"
-    }
   }
 }

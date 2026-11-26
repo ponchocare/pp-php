@@ -1,0 +1,89 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release, as X.Y.Z. Leave empty for the next patch after the newest tag.'
+        required: false
+        default: ''
+
+# Never run two deploys at once: both would try to release the same version.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: CI
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    name: Release
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write # create the release and its tag
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # the version is worked out from the existing tags
+
+      # Git tags are the source of truth for the version: Packagist reads the
+      # versions from the tags, and composer.json has no `version` field, so
+      # nothing is committed back to main. Only plain X.Y.Z tags count. To skip
+      # versions, push a bare tag or pass the `version` input.
+      - name: Work out the version
+        id: version
+        env:
+          REQUESTED: ${{ inputs.version }}
+        run: |
+          semver='^[0-9]+\.[0-9]+\.[0-9]+$'
+          last=$(git tag --list | grep -E "$semver" | sort -V | tail -n 1)
+          last=${last:-0.0.0}
+
+          if [ -n "$REQUESTED" ]; then
+            if ! [[ "$REQUESTED" =~ $semver ]]; then
+              echo "::error::The requested version '$REQUESTED' is not in X.Y.Z format"
+              exit 1
+            fi
+            newest=$(printf '%s\n%s\n' "$last" "$REQUESTED" | sort -V | tail -n 1)
+            if [ "$REQUESTED" = "$last" ] || [ "$newest" != "$REQUESTED" ]; then
+              echo "::error::The requested version $REQUESTED must be higher than the newest tag ($last)"
+              exit 1
+            fi
+            version="$REQUESTED"
+          else
+            IFS=. read -r major minor patch <<< "$last"
+            version="$major.$minor.$((patch + 1))"
+          fi
+
+          echo "Newest tag: $last. Releasing: $version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      # Packagist rejects a tag whose composer.json declares a different
+      # version, so make sure nobody has added one.
+      - name: Check composer.json has no version
+        run: |
+          if jq -e 'has("version")' composer.json > /dev/null; then
+            echo "::error::composer.json must not have a \"version\" field: Packagist takes the version from the tag"
+            exit 1
+          fi
+
+      # Creates the tag on the commit being deployed, with notes generated from
+      # the changes since the previous release. This is the publish step: the
+      # Packagist GitHub hook picks up the new tag.
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          gh release create "$VERSION" \
+            --target "$GITHUB_SHA" \
+            --title "$VERSION" \
+            --generate-notes

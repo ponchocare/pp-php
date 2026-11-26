@@ -1,32 +1,49 @@
 name: CI
 
 on:
-  push:
+  pull_request:
+  # No push trigger: main is only checked when deploy.yml calls this workflow.
+  workflow_dispatch:
+  workflow_call:
+
+# When called from deploy.yml, github.workflow is "Deploy", so this group never
+# collides with (and cancels) a manual CI run on the same ref.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
-  checks:
-    name: checks (PHP ${{ matrix.php }})
+  ci:
+    name: Lint and test (PHP ${{ matrix.php }})
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
         php: ['8.2', '8.3', '8.4', '8.5']
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
+      - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
           tools: composer
           coverage: none
 
+      - name: Validate composer.json
+        run: composer validate --strict --no-check-lock
+
+      # No composer.lock in this repo (it is gitignored), so dependencies are
+      # resolved fresh for each PHP version.
       - name: Install dependencies
         run: composer update --no-interaction --no-progress --prefer-dist
 
-      - name: Check code style
-        run: vendor/bin/php-cs-fixer check src/
+      # Same file set as `composer exec php-cs-fixer fix .`, from .php-cs-fixer.dist.php.
+      - name: Lint
+        run: vendor/bin/php-cs-fixer check
 
-      - name: Run tests
+      - name: Test
         run: vendor/bin/phpunit tests/
